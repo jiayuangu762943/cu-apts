@@ -154,9 +154,9 @@ const ApartmentHeader = ({
                   <Grid container className={ratingSection}>
                     {!!averageRating && (
                       <Grid item className={aptRating} xs={12}>
-                        <Grid container direction="row" alignItems="center">
+                        <Grid container direction="row" alignItems="flex-end">
                           <Grid item xs={5}>
-                            <HeartRating value={averageRating} precision={0.5} readOnly />
+                            <HeartRating value={averageRating} precision={0.25} readOnly />
                           </Grid>
                           <Grid item xs={7}>
                             <Typography variant="h6">
