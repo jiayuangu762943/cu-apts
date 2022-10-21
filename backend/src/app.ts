@@ -13,49 +13,28 @@ import {
   ApartmentWithLabel,
   ApartmentWithId,
 } from '@common/types/db-types';
-import { db } from './firebase-config';
-import { Section } from './firebase-config/types';
 import authenticate from './auth';
-import DBConnect from '../dbConfigs';
-// import reviewCollections from '../models/Reviews';
-// import buildingCollections from '../models/Buildings';
-// import landlordCollections from '../models/Landlords';
-
-// const reviewCollection = db.collection('reviews');
-// const landlordCollection = db.collection('landlords');
-// const buildingsCollection = db.collection('buildings');
-// const likesCollection = db.collection('likes');
+import ReviewCollection from '../models/Reviews';
+import LandlordCollection from '../models/Landlords';
 
 const app: Express = express();
 
 app.use(express.json());
 app.use(cors({ origin: '*' }));
 app.use(morgan('combined'));
-
-app.get('/', async (_, res) => {
-  const snapshot = await db.collection('faqs').get();
-
-  const faqs: Section[] = snapshot.docs.map((doc) => {
-    const data = doc.data();
-    const section: Section = {
-      headerName: data.headerName,
-      faqs: data.faqs,
-    };
-    return section;
-  });
-
-  res.status(200).send(JSON.stringify(faqs));
-});
+// import db  '../dbConfigs';
+// import { Section }  './firebase-config/types';
+// import buildingCollection from '../models/Buildings';
 
 app.post('/new-review', authenticate, async (req, res) => {
   try {
-    const doc = reviewCollection.doc();
     const review = req.body as Review;
     if (review.overallRating === 0 || review.reviewText === '') {
       res.status(401).send('Error: missing fields');
     }
-    doc.set({ ...review, date: new Date(review.date), likes: 0 });
-    res.status(201).send(doc.id);
+    const newReviewDoc = new ReviewCollection({ ...review, date: new Date(review.date), likes: 0 });
+    await newReviewDoc.save();
+    res.status(201).send(newReviewDoc.id);
   } catch (err) {
     console.error(err);
     res.status(401).send('Error');
@@ -64,11 +43,10 @@ app.post('/new-review', authenticate, async (req, res) => {
 
 app.get('/review/:idType/:id', async (req, res) => {
   const { idType, id } = req.params;
-  const reviewDocs = (await reviewCollection.where(`${idType}`, '==', id).get()).docs;
+  const reviewDocs = await ReviewCollection.where(idType).equals(id).exec();
   const reviews: Review[] = reviewDocs.map((doc) => {
-    const data = doc.data();
-    const review = { ...data, date: data.date.toDate() } as ReviewInternal;
-    return { ...review, id: doc.id } as ReviewWithId;
+    const review = { ...doc, date: doc.date } as ReviewInternal;
+    return { ...review, id: doc.aptId } as ReviewWithId;
   });
   res.status(200).send(JSON.stringify(reviews));
 });
@@ -95,7 +73,7 @@ app.get('/apts/:ids', async (req, res) => {
 app.get('/landlord/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const ref = landlordCollection.doc(id);
+    // const ref = LandlordCollection.doc(id);
     const doc = await ref.get();
     if (!doc.exists) {
       throw new Error('Invalid id');
@@ -126,8 +104,8 @@ const pageData = async (buildings: ApartmentWithId[]) =>
         throw new Error('Invalid landlordId');
       }
 
-      const reviewList = await reviewCollection.where(`aptId`, '==', id).get();
-      const landlordDoc = await landlordCollection.doc(landlordId).get();
+      // const reviewList = await reviewCollection.where(`aptId`, '==', id).get();
+      // const landlordDoc = await andlordCollection.doc(landlordId).get();
 
       const numReviews = reviewList.docs.length;
       const company = landlordDoc.data()?.name;
@@ -150,7 +128,7 @@ app.get('/buildings/all/:landlordId', async (req, res) => {
 
 app.post('/new-landlord', async (req, res) => {
   try {
-    const doc = landlordCollection.doc();
+    // const doc = landlordCollection.doc();
     const landlord: Landlord = req.body as Landlord;
     doc.set(landlord);
     res.status(201).send(doc.id);
