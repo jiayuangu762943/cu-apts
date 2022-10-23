@@ -20,4 +20,4 @@
 
 // // landlordSchema.plugin(autopopulate);
 
-// // export default model<ILandlordDocument>('Landlord', landlordSchema);
+// // export default model<ILandlordDocument>('Landlord', landlordSchema)

@@ -38,6 +38,7 @@ app.post('/new-review', authenticate, async (req, res) => {
       date: new Date(review.date),
       likes: 0,
     });
+
     await newReviewDoc.save();
     res.status(201).send(newReviewDoc.id);
   } catch (err) {
@@ -48,6 +49,7 @@ app.post('/new-review', authenticate, async (req, res) => {
 
 app.get('/review/:idType/:id', async (req, res) => {
   const { idType, id } = req.params;
+
   const reviewDocs = await ReviewsCollection.where(idType).equals(id).exec();
   const reviews: Review[] = reviewDocs.map((doc) => {
     const review = { ...doc, date: doc.date } as ReviewInternal;
@@ -78,6 +80,7 @@ app.get('/apts/:ids', async (req, res) => {
 app.get('/landlord/:id', async (req, res) => {
   try {
     const { id } = req.params;
+
     const doc = await LandlordsCollection.findById(id).exec();
     if (doc == null) {
       throw new Error('Invalid id');
@@ -226,8 +229,6 @@ app.get('/page-data/:page', async (req, res) => {
 //       res.status(400).send('Error');
 //     }
 //   };
-
-// DBConnect.dbConnection();
 
 // app.post('/add-like', authenticate, likeHandler(false));
 
