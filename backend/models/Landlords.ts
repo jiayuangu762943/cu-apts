@@ -1,49 +1,39 @@
 import { model, Schema } from 'mongoose';
 import autopopulate from 'mongoose-autopopulate';
-import { IReviewDocument } from '../types/review.type';
+import { ILandlordDocument } from '../types/landlord.type';
 
-const reviewSchema = new Schema(
+const landlordSchema = new Schema(
   {
-    aptID: {
+    name: {
       type: String,
       required: true,
     },
-    likes: {
+    contact: {
+      type: String,
+      required: true,
+    },
+    avgRating: {
       type: Number,
     },
-    date: {
-      type: Date,
-      required: true,
-    },
-    detailedRatings: {
-      type: {
-        location: { type: Number },
-        safety: { type: Number },
-        value: { type: Number },
-        maintenance: { type: Number },
-        communication: { type: Number },
-        conditions: { type: Number },
-      },
-      required: true,
-    },
-    landlordId: {
+    profilePhoto: {
       type: String,
-      required: true,
-    },
-    overallRating: {
-      type: [Number],
     },
     photos: {
       type: [String],
     },
-    reviewText: {
-      type: String,
-      required: true,
+    reviews: {
+      type: [String],
+    },
+    properties: {
+      type: [String],
+    },
+    address: {
+      type: Schema.Types.Mixed,
     },
   },
   { timestamps: true }
 );
 
-reviewSchema.plugin(autopopulate);
+landlordSchema.plugin(autopopulate);
 
-export default model<IReviewDocument>('reviewCollections', reviewSchema);
+export default model<ILandlordDocument>('LandlordsCollection', landlordSchema);

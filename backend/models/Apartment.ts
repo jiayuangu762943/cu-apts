@@ -12,11 +12,11 @@ const apartmentSchema = new Schema(
       type: String,
       required: true,
     },
-    landlordId: {
-      type: String,
-    },
     numBaths: {
       type: Number,
+    },
+    landlordId: {
+      type: String,
     },
     numBeds: {
       type: Number,
@@ -33,4 +33,4 @@ const apartmentSchema = new Schema(
 
 apartmentSchema.plugin(autopopulate);
 
-export default model<IApartmentDocument>('ApartmentsCollection', apartmentSchema);
+export default model<IApartmentDocument>('buildingsCollection', apartmentSchema);

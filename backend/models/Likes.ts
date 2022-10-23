@@ -18,6 +18,6 @@
 //   profilePhoto: {},
 // });
 
-// landlordSchema.plugin(autopopulate);
+// // landlordSchema.plugin(autopopulate);
 
-// export default model<>('Landlord', likeSchema);
+// // export default model<ILandlordDocument>('Landlord', landlordSchema)

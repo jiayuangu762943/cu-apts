@@ -46,4 +46,4 @@ const reviewSchema = new Schema(
 
 reviewSchema.plugin(autopopulate);
 
-export default model<IReviewDocument>('reviewCollections', reviewSchema);
+export default model<IReviewDocument>('ReviewCollection', reviewSchema);
