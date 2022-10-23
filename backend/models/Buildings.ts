@@ -33,4 +33,4 @@ const apartmentSchema = new Schema(
 
 apartmentSchema.plugin(autopopulate);
 
-export default model<IApartmentDocument>('buildingsCollection', apartmentSchema);
+export default model<IApartmentDocument>('ApartmentsCollection', apartmentSchema);

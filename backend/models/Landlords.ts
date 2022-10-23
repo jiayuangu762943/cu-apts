@@ -36,4 +36,4 @@ const landlordSchema = new Schema(
 
 landlordSchema.plugin(autopopulate);
 
-export default model<ILandlordDocument>('landlordCollections', landlordSchema);
+export default model<ILandlordDocument>('LandlordsCollection', landlordSchema);

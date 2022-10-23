@@ -13,49 +13,33 @@ import {
   ApartmentWithLabel,
   ApartmentWithId,
 } from '@common/types/db-types';
-import { db } from './firebase-config';
-import { Section } from './firebase-config/types';
 import authenticate from './auth';
-import DBConnect from '../dbConfigs';
-// import reviewCollections from '../models/Reviews';
-// import buildingCollections from '../models/Buildings';
-// import landlordCollections from '../models/Landlords';
 
-// const reviewCollection = db.collection('reviews');
-// const landlordCollection = db.collection('landlords');
-// const buildingsCollection = db.collection('buildings');
-// const likesCollection = db.collection('likes');
+import ReviewsCollection from '../models/Reviews';
+import LandlordsCollection from '../models/Landlords';
+import ApartmentsCollection from '../models/Buildings';
 
 const app: Express = express();
 
 app.use(express.json());
 app.use(cors({ origin: '*' }));
 app.use(morgan('combined'));
-
-app.get('/', async (_, res) => {
-  const snapshot = await db.collection('faqs').get();
-
-  const faqs: Section[] = snapshot.docs.map((doc) => {
-    const data = doc.data();
-    const section: Section = {
-      headerName: data.headerName,
-      faqs: data.faqs,
-    };
-    return section;
-  });
-
-  res.status(200).send(JSON.stringify(faqs));
-});
+// import db  '../dbConfigs';
+// import { Section }  './firebase-config/types';
 
 app.post('/new-review', authenticate, async (req, res) => {
   try {
-    const doc = reviewCollection.doc();
     const review = req.body as Review;
     if (review.overallRating === 0 || review.reviewText === '') {
       res.status(401).send('Error: missing fields');
     }
-    doc.set({ ...review, date: new Date(review.date), likes: 0 });
-    res.status(201).send(doc.id);
+    const newReviewDoc = new ReviewsCollection({
+      ...review,
+      date: new Date(review.date),
+      likes: 0,
+    });
+    await newReviewDoc.save();
+    res.status(201).send(newReviewDoc.id);
   } catch (err) {
     console.error(err);
     res.status(401).send('Error');
@@ -64,10 +48,9 @@ app.post('/new-review', authenticate, async (req, res) => {
 
 app.get('/review/:idType/:id', async (req, res) => {
   const { idType, id } = req.params;
-  const reviewDocs = (await reviewCollection.where(`${idType}`, '==', id).get()).docs;
+  const reviewDocs = await ReviewsCollection.where(idType).equals(id).exec();
   const reviews: Review[] = reviewDocs.map((doc) => {
-    const data = doc.data();
-    const review = { ...data, date: data.date.toDate() } as ReviewInternal;
+    const review = { ...doc, date: doc.date } as ReviewInternal;
     return { ...review, id: doc.id } as ReviewWithId;
   });
   res.status(200).send(JSON.stringify(reviews));
@@ -79,11 +62,11 @@ app.get('/apts/:ids', async (req, res) => {
     const idsList = ids.split(',');
     const aptsArr = await Promise.all(
       idsList.map(async (id) => {
-        const snapshot = await buildingsCollection.doc(id).get();
-        if (!snapshot.exists) {
+        const snapshot = await ApartmentsCollection.findById(id).exec();
+        if (snapshot == null) {
           throw new Error('Invalid id');
         }
-        return { id, ...snapshot.data() } as ApartmentWithId;
+        return { id, ...snapshot } as ApartmentWithId;
       })
     );
     res.status(200).send(JSON.stringify(aptsArr));
@@ -95,12 +78,11 @@ app.get('/apts/:ids', async (req, res) => {
 app.get('/landlord/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    const ref = landlordCollection.doc(id);
-    const doc = await ref.get();
-    if (!doc.exists) {
+    const doc = await LandlordsCollection.findById(id).exec();
+    if (doc == null) {
       throw new Error('Invalid id');
     }
-    const data = doc.data() as Landlord;
+    const data = doc as Landlord;
     res.status(201).send(data);
   } catch (err) {
     res.status(400).send(err);
@@ -110,8 +92,8 @@ app.get('/landlord/:id', async (req, res) => {
 app.get('/buildings/:landlordId', async (req, res) => {
   try {
     const { landlordId } = req.params;
-    const buildingRefs = await buildingsCollection.where('landlordId', '==', landlordId).get();
-    const buildings = buildingRefs.docs.map((doc) => doc.data() as Apartment);
+    const buildingRefs = await ApartmentsCollection.where('landlordId').equals(landlordId).exec();
+    const buildings = buildingRefs.map((doc) => doc as Apartment);
     res.status(201).send(buildings);
   } catch (err) {
     res.status(400).send(err);
@@ -126,11 +108,11 @@ const pageData = async (buildings: ApartmentWithId[]) =>
         throw new Error('Invalid landlordId');
       }
 
-      const reviewList = await reviewCollection.where(`aptId`, '==', id).get();
-      const landlordDoc = await landlordCollection.doc(landlordId).get();
+      const reviewList = await ReviewsCollection.where(`aptId`).equals(id).exec();
+      const landlordDoc = await LandlordsCollection.findById(landlordId).exec();
 
-      const numReviews = reviewList.docs.length;
-      const company = landlordDoc.data()?.name;
+      const numReviews = reviewList.length;
+      const company = landlordDoc?.name;
       return {
         buildingData,
         numReviews,
@@ -141,18 +123,17 @@ const pageData = async (buildings: ApartmentWithId[]) =>
 
 app.get('/buildings/all/:landlordId', async (req, res) => {
   const { landlordId } = req.params;
-  const buildingDocs = (await buildingsCollection.where('landlordId', '==', landlordId).get()).docs;
+  const buildingDocs = await ApartmentsCollection.where('landlordId').equals(landlordId).exec();
   const buildings: ApartmentWithId[] = buildingDocs.map(
-    (doc) => ({ id: doc.id, ...doc.data() } as ApartmentWithId)
+    (doc) => ({ id: doc.id, ...doc } as ApartmentWithId)
   );
   res.status(200).send(JSON.stringify(await pageData(buildings)));
 });
 
 app.post('/new-landlord', async (req, res) => {
   try {
-    const doc = landlordCollection.doc();
     const landlord: Landlord = req.body as Landlord;
-    doc.set(landlord);
+    const doc = new LandlordsCollection(landlord);
     res.status(201).send(doc.id);
   } catch (err) {
     console.error(err);
@@ -163,13 +144,13 @@ app.post('/new-landlord', async (req, res) => {
 const isLandlord = (obj: LandlordWithId | ApartmentWithId): boolean => 'contact' in obj;
 app.post('/set-data', async (req, res) => {
   try {
-    const landlordDocs = (await landlordCollection.get()).docs;
+    const landlordDocs = await LandlordsCollection.find().exec();
     const landlords: LandlordWithId[] = landlordDocs.map(
-      (landlord) => ({ id: landlord.id, ...landlord.data() } as LandlordWithId)
+      (landlord) => ({ id: landlord.id, ...landlord } as LandlordWithId)
     );
-    const aptDocs = (await buildingsCollection.get()).docs;
+    const aptDocs = await ApartmentsCollection.find().exec();
     const apts: ApartmentWithId[] = aptDocs.map(
-      (apt) => ({ id: apt.id, ...apt.data() } as ApartmentWithId)
+      (apt) => ({ id: apt.id, ...apt } as ApartmentWithId)
     );
     app.set('landlords', landlords);
     app.set('apts', apts);
@@ -208,10 +189,13 @@ app.get('/search', async (req, res) => {
 
 app.get('/page-data/:page', async (req, res) => {
   const { page } = req.params;
-  const collection = page === 'home' ? buildingsCollection.limit(3) : buildingsCollection.limit(12);
-  const buildingDocs = (await collection.get()).docs;
-  const buildings: ApartmentWithId[] = buildingDocs.map(
-    (doc) => ({ id: doc.id, ...doc.data() } as ApartmentWithId)
+  const collection =
+    page === 'home'
+      ? await ApartmentsCollection.find().limit(3).exec()
+      : await ApartmentsCollection.find().limit(12).exec();
+  // const buildingDocs = collection as Apartment[];
+  const buildings: ApartmentWithId[] = collection.map(
+    (doc) => ({ id: doc.id, ...doc } as ApartmentWithId)
   );
   res.status(200).send(JSON.stringify(await pageData(buildings)));
 });
@@ -242,7 +226,8 @@ app.get('/page-data/:page', async (req, res) => {
 //       res.status(400).send('Error');
 //     }
 //   };
-DBConnect.dbConnection();
+
+// DBConnect.dbConnection();
 
 // app.post('/add-like', authenticate, likeHandler(false));
 
