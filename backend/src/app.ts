@@ -18,7 +18,7 @@ import authenticate from './auth';
 import ReviewsCollection from '../models/Reviews';
 import LandlordsCollection from '../models/Landlords';
 import ApartmentsCollection from '../models/Buildings';
-
+// doc._id can't pass yarn workspace linter tests
 const app: Express = express();
 
 app.use(express.json());
