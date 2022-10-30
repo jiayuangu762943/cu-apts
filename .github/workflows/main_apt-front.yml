@@ -9,8 +9,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-#     env:
-#       working-directory: ./frontend
+    #     env:
+    #       working-directory: ./frontend
 
     steps:
       - uses: actions/checkout@v2
@@ -30,7 +30,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: node-app-front
-          path: build/front/
+          path: ./frontend/build
 
   deploy:
     runs-on: ubuntu-latest
