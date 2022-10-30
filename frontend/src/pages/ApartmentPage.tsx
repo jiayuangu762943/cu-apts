@@ -16,7 +16,7 @@ import {
 import Toast from '../components/LeaveReview/Toast';
 import LinearProgress from '../components/utils/LinearProgress';
 import { Likes, ReviewWithId } from '../../../common/types/db-types';
-import { getUser } from '../utils/firebase';
+// import { getUser } from '../utils/firebase';
 import DropDown from '../components/utils/DropDown';
 import { useParams } from 'react-router-dom';
 import NotFoundPage from './NotFoundPage';
@@ -62,7 +62,7 @@ const ApartmentPage = (): ReactElement => {
   const [aptData, setAptData] = useState<ApartmentWithId[]>([]);
   const [apt, setApt] = useState<ApartmentWithId | undefined>(undefined);
   const [loaded, setLoaded] = useState(false);
-  const [user, setUser] = useState<firebase.User | null>(null);
+  // const [user, setUser] = useState<firebase.User | null>(null);
   const [showSignInError, setShowSignInError] = useState(false);
   const [sortBy, setSortBy] = useState<Fields>('date');
   const toastTime = 3500;
@@ -197,14 +197,14 @@ const ApartmentPage = (): ReactElement => {
   // const removeLike = likeHelper(true);
 
   const openReviewModal = async () => {
-    if (!user) {
-      let user = await getUser(true);
-      setUser(user);
-      if (!user) {
-        showSignInErrorToast();
-        return;
-      }
-    }
+    // if (!user) {
+    //   let user = await getUser(true);
+    //   setUser(user);
+    //   if (!user) {
+    //     showSignInErrorToast();
+    //     return;
+    //   }
+    // }
     setReviewOpen(true);
   };
 
@@ -219,7 +219,7 @@ const ApartmentPage = (): ReactElement => {
         toastTime={toastTime}
         aptId={apt.id}
         aptName={apt.name}
-        user={user}
+        // user={user}
       />
       <PhotoCarousel
         photos={landlordData.photos}
@@ -366,9 +366,7 @@ const ApartmentPage = (): ReactElement => {
             )}
             <Grid container item spacing={3}>
               {sortReviews(reviewData, sortBy).map((review, index) => (
-                <Grid item xs={12} key={index}>
-
-                </Grid>
+                <Grid item xs={12} key={index}></Grid>
               ))}
             </Grid>
           </Grid>
