@@ -1,17 +1,17 @@
 {
   "private": true,
   "scripts": {
-    "build": "yarn workspaces run tsc",
-    "tsc": "yarn workspaces run tsc",
-    "frontend-dev": "yarn workspace frontend start",
-    "backend-dev": "yarn workspace backend dev",
-    "lint": "yarn workspaces run lint",
-    "lint:fix": "yarn workspaces run lint:fix",
+    "build": "npm workspaces run tsc",
+    "tsc": "npm workspaces run tsc",
+    "frontend-dev": "npm workspace frontend start",
+    "backend-dev": "npm workspace backend dev",
+    "lint": "npm workspaces run lint",
+    "lint:fix": "npm workspaces run lint:fix",
     "format": "prettier --write **/*.{ts,js,tsx,jsx,scss,css,html}",
     "format:check": "prettier --check **/*.{ts,js,tsx,jsx,scss,css,html}",
     "start": "run-p frontend-dev backend-dev",
     "prepare": "husky install",
-    "test": "yarn workspace backend test"
+    "test": "npm workspace backend test"
   },
   "workspaces": [
     "frontend",
@@ -56,10 +56,10 @@
       "prettier --write"
     ],
     "./frontend/**/*.{ts,js,tsx,jsx}": [
-      "yarn workspace frontend lint:fix"
+      "npm workspace frontend lint:fix"
     ],
     "./backend/**/*.{ts,js,tsx,jsx}": [
-      "yarn workspace backend lint:fix"
+      "npm workspace backend lint:fix"
     ]
   },
   "engines": {
