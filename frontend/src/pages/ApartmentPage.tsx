@@ -2,7 +2,6 @@ import React, { ReactElement, useState, useEffect, useCallback } from 'react';
 import { Button, Container, Grid, Hidden, Typography, makeStyles } from '@material-ui/core';
 import ReviewModal from '../components/LeaveReview/ReviewModal';
 import PhotoCarousel from '../components/PhotoCarousel/PhotoCarousel';
-import ReviewComponent from '../components/Review/Review';
 import ReviewHeader from '../components/Review/ReviewHeader';
 import { useTitle } from '../utils';
 import ApartmentHeader from '../components/Apartment/Header';
@@ -56,7 +55,6 @@ const ApartmentPage = (): ReactElement => {
   const [landlordData, setLandlordData] = useState<Landlord>();
   const [aveRatingInfo, setAveRatingInfo] = useState<RatingInfo[]>([]);
   const [reviewData, setReviewData] = useState<ReviewWithId[]>([]);
-  const [likedReviews, setLikedReviews] = useState<Likes>({});
   const [reviewOpen, setReviewOpen] = useState(false);
   const [carouselOpen, setCarouselOpen] = useState(false);
   const [showConfirmation, setShowConfirmation] = useState(false);
