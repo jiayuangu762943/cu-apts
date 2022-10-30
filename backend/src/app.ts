@@ -13,6 +13,7 @@ import {
   ApartmentWithLabel,
   ApartmentWithId,
 } from '@common/types/db-types';
+import path from 'path';
 import authenticate from './auth';
 
 import ReviewsCollection from '../models/Reviews';
@@ -24,6 +25,10 @@ const app: Express = express();
 app.use(express.json());
 app.use(cors({ origin: '*' }));
 app.use(morgan('combined'));
+app.use(express.static(__dirname)); //here is important thing - no static directory, because all static :)
+app.get('/*', function (req, res) {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 // import db  '../dbConfigs';
 // import { Section }  './firebase-config/types';
 
