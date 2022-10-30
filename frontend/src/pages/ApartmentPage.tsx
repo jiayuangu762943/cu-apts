@@ -16,7 +16,7 @@ import {
 import Toast from '../components/LeaveReview/Toast';
 import LinearProgress from '../components/utils/LinearProgress';
 import { Likes, ReviewWithId } from '../../../common/types/db-types';
-import { subscribeLikes, getUser } from '../utils/firebase';
+import { getUser } from '../utils/firebase';
 import DropDown from '../components/utils/DropDown';
 import { useParams } from 'react-router-dom';
 import NotFoundPage from './NotFoundPage';
@@ -119,10 +119,6 @@ const ApartmentPage = (): ReactElement => {
       setLoaded(true);
     }
   }, [aptData, apt, landlordData, buildings, reviewData, aveRatingInfo, otherProperties]);
-
-  useEffect(() => {
-    return subscribeLikes(setLikedReviews);
-  }, []);
 
   useEffect(() => {
     get<CardData[]>(`/buildings/all/${apt?.landlordId}`, {
