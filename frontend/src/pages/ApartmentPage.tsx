@@ -376,7 +376,7 @@ const ApartmentPage = (): ReactElement => {
                   <ReviewComponent
                     review={review}
                     liked={likedReviews[review.id]}
-                    likeLoading={likeStatuses[review.id]}
+                    //likeLoading={likeStatuses[review.id]}
                     // addLike={addLike}
                     // removeLike={removeLike}
                   />
