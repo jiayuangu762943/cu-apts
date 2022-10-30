@@ -15,7 +15,8 @@ import {
 } from '../../../common/types/db-types';
 import Toast from '../components/LeaveReview/Toast';
 import LinearProgress from '../components/utils/LinearProgress';
-import { Likes, ReviewWithId } from '../../../common/types/db-types';
+// import { Likes, ReviewWithId } from '../../../common/types/db-types';
+import { ReviewWithId } from '../../../common/types/db-types';
 // import { getUser } from '../utils/firebase';
 import DropDown from '../components/utils/DropDown';
 import { useParams } from 'react-router-dom';
@@ -160,9 +161,9 @@ const ApartmentPage = (): ReactElement => {
     showToast(setShowConfirmation);
   };
 
-  const showSignInErrorToast = () => {
-    showToast(setShowSignInError);
-  };
+  // const showSignInErrorToast = () => {
+  //   showToast(setShowSignInError);
+  // };
 
   // const likeHelper = (dislike = false) => {
   //   return async (reviewId: string) => {

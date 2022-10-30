@@ -4,7 +4,7 @@ import { useParams } from 'react-router-dom';
 import ReviewModal from '../components/LeaveReview/ReviewModal';
 import PhotoCarousel from '../components/PhotoCarousel/PhotoCarousel';
 import InfoFeatures from '../components/Review/InfoFeatures';
-import ReviewComponent from '../components/Review/Review';
+// import ReviewComponent from '../components/Review/Review';
 import ReviewHeader from '../components/Review/ReviewHeader';
 import { useTitle } from '../utils';
 import LandlordHeader from '../components/Landlord/Header';
@@ -13,7 +13,8 @@ import styles from './LandlordPage.module.scss';
 import { Landlord } from '../../../common/types/db-types';
 import Toast from '../components/LeaveReview/Toast';
 import LinearProgress from '../components/utils/LinearProgress';
-import { Likes, ReviewWithId } from '../../../common/types/db-types';
+// import { Likes, ReviewWithId } from '../../../common/types/db-types';
+import { ReviewWithId } from '../../../common/types/db-types';
 // import { subscribeLikes, getUser } from '../utils/firebase';
 import DropDown from '../components/utils/DropDown';
 import NotFoundPage from './NotFoundPage';
@@ -103,9 +104,9 @@ const LandlordPage = (): ReactElement => {
     showToast(setShowConfirmation);
   };
 
-  const showSignInErrorToast = () => {
-    showToast(setShowSignInError);
-  };
+  // const showSignInErrorToast = () => {
+  //   showToast(setShowSignInError);
+  // };
 
   //   const likeHelper = (dislike = false) => {
   //     return async (reviewId: string) => {
