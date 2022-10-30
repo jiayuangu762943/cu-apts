@@ -58,7 +58,7 @@ const ReviewComponent = ({
 }: // addLike,
 // removeLike,
 Props): ReactElement => {
-  const { id, detailedRatings, overallRating, date, reviewText, likes, photos } = review;
+  const { detailedRatings, overallRating, date, reviewText, likes, photos } = review;
   const formattedDate = format(new Date(date), 'MMM dd, yyyy').toUpperCase();
   const { root, expand, expandOpen, dateText, button } = useStyles();
   const [expanded, setExpanded] = useState(false);

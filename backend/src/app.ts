@@ -32,7 +32,7 @@ app.get('/*', function (req, res) {
 // import db  '../dbConfigs';
 // import { Section }  './firebase-config/types';
 
-app.post('/new-review', authenticate, async (req, res) => {
+app.post('/new-review', async (req, res) => {
   try {
     const review = req.body as Review;
     if (review.overallRating === 0 || review.reviewText === '') {
