@@ -38,7 +38,8 @@ const LandlordPage = (): ReactElement => {
   const [buildings, setBuildings] = useState<CardData[]>([]);
   const [loaded, setLoaded] = useState(false);
   // const [user, setUser] = useState<firebase.User | null>(null);
-  const [showSignInError, setShowSignInError] = useState(false);
+  // const [showSignInError, setShowSignInError] = useState(false);
+  const [showSignInError] = useState(false);
   const toastTime = 4750;
   const [sortBy, setSortBy] = useState<Fields>('date');
   const [notFound, setNotFound] = useState(false);

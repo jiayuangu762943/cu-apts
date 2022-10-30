@@ -64,7 +64,8 @@ const ApartmentPage = (): ReactElement => {
   const [apt, setApt] = useState<ApartmentWithId | undefined>(undefined);
   const [loaded, setLoaded] = useState(false);
   // const [user, setUser] = useState<firebase.User | null>(null);
-  const [showSignInError, setShowSignInError] = useState(false);
+  // const [showSignInError, setShowSignInError] = useState(false);
+  const [showSignInError] = useState(false);
   const [sortBy, setSortBy] = useState<Fields>('date');
   const toastTime = 3500;
   const [notFound, setNotFound] = useState(false);
