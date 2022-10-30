@@ -373,13 +373,7 @@ const ApartmentPage = (): ReactElement => {
             <Grid container item spacing={3}>
               {sortReviews(reviewData, sortBy).map((review, index) => (
                 <Grid item xs={12} key={index}>
-<!--                   <ReviewComponent
-                    review={review}
-                    liked={likedReviews[review.id]}
-                    likeLoading={likeStatuses[review.id]}
-                    addLike={addLike}
-                    removeLike={removeLike}
-                  /> -->
+
                 </Grid>
               ))}
             </Grid>
