@@ -17,7 +17,8 @@ const useStyles = makeStyles({
 
 const ApartmentCards = ({ data }: Props): ReactElement => {
   const { boundingBox } = useStyles();
-
+  console.log(data);
+  data = [];
   return (
     <Grid container spacing={3} className={boundingBox}>
       {data &&
