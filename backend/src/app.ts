@@ -1,7 +1,12 @@
 import express, { Express } from 'express';
 import cors from 'cors';
+import dotenv from 'dotenv';
 import Fuse from 'fuse.js';
 import morgan from 'morgan';
+// import passport from 'passport';
+// import PassportJwt from 'passport-jwt';
+import User from '../models/User';
+import { IUserDocument } from '../types/user.type';
 import {
   Review,
   Landlord,
@@ -14,7 +19,8 @@ import {
   ApartmentWithId,
 } from '@common/types/db-types';
 import path from 'path';
-import authenticate from './auth';
+import db from '../dbConfigs';
+// import authenticate from './auth';
 
 import ReviewsCollection from '../models/Reviews';
 import LandlordsCollection from '../models/Landlords';
@@ -22,14 +28,34 @@ import ApartmentsCollection from '../models/Buildings';
 // doc._id can't pass yarn workspace linter tests
 const app: Express = express();
 
+dotenv.config();
+
 app.use(express.json());
 app.use(cors({ origin: '*' }));
 app.use(morgan('combined'));
 app.use(express.static(__dirname)); //here is important thing - no static directory, because all static :)
-app.get('/*', function (req, res) {
-  res.sendFile(path.join(__dirname, 'index.html'));
-});
-// import db  '../dbConfigs';
+
+// app.use(passport.initialize());
+// const { Strategy: JwtStrategy, ExtractJwt } = PassportJwt;
+// const opts = {
+//   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+//   secretOrKey: process.env.AUTH_SECRET,
+// };
+// passport.use(
+//   new JwtStrategy(opts, (jwtPayload, done) => {
+//     User.findById(jwtPayload._id, (err: any, user: IUserDocument) => {
+//       if (err) {
+//         return done(err, false);
+//       }
+//       if (user) {
+//         return done(null, user);
+//       }
+//       return done(null, false);
+//     });
+//   })
+// );
+
+db.dbConnection();
 // import { Section }  './firebase-config/types';
 
 app.post('/new-review', async (req, res) => {
