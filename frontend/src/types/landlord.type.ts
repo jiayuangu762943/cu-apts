@@ -1,6 +1,7 @@
 import { IDocument } from './index.type';
 
 export interface ILandlordDocument extends Document {
+  readonly id: number;
   readonly name: string;
   readonly avgRating: number;
   readonly photos: readonly string[]; // can be empty

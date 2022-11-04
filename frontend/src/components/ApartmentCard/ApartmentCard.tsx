@@ -59,7 +59,7 @@ const useStyles = makeStyles({
 
 const ApartmentCard = ({ buildingData, numReviews, company }: Props): ReactElement => {
   const { id, name, photos } = buildingData;
-  const img = photos.length > 0 ? photos[0] : ApartmentImg;
+  const img = photos?.length > 0 ? photos[0] : ApartmentImg;
   const { imgStyle, imgMobile, aptNameTxt, marginTxt, card, reviewNum, textStyle } = useStyles();
   const matches = useMediaQuery('(min-width:600px)');
   const [reviewList, setReviewList] = useState<ReviewWithId[]>([]);

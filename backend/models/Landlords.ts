@@ -4,6 +4,10 @@ import { ILandlordDocument } from '../types/landlord.type';
 
 const landlordSchema = new Schema(
   {
+    id: {
+      type: Number,
+      required: true,
+    },
     name: {
       type: String,
       required: true,
@@ -15,17 +19,14 @@ const landlordSchema = new Schema(
     avgRating: {
       type: Number,
     },
-    profilePhoto: {
+    photos: {
       type: String,
     },
-    photos: {
-      type: [String],
-    },
     reviews: {
-      type: [String],
+      type: String,
     },
     properties: {
-      type: [String],
+      type: String,
     },
     address: {
       type: Schema.Types.Mixed,

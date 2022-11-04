@@ -4,6 +4,10 @@ import { IApartmentDocument } from '../types/apartment.type';
 
 const apartmentSchema = new Schema(
   {
+    id: {
+      type: Number,
+      required: true,
+    },
     name: {
       type: String,
       required: true,

@@ -143,10 +143,14 @@ const pageData = async (buildings: ApartmentWithId[]) =>
       }
 
       const reviewList = await ReviewsCollection.where(`aptId`).equals(id).exec();
-      const landlordDoc = await LandlordsCollection.findById(landlordId).exec();
+      // const landlordDoc = await LandlordsCollection.findById(landlordId).exec();
+      const company = await LandlordsCollection.where(`id`)
+        .equals(landlordId)
+        .select('name')
+        .exec();
 
       const numReviews = reviewList.length;
-      const company = landlordDoc?.name;
+
       return {
         buildingData,
         numReviews,
