@@ -132,8 +132,10 @@ const ApartmentPage = (): ReactElement => {
     const features = ['location', 'safety', 'value', 'maintenance', 'communication', 'conditions'];
     return features.map((feature) => {
       let key = feature as keyof DetailedRating;
+      console.log('here');
+      console.log(reviews);
       let rating =
-        reviews.reduce((sum, review) => sum + review.detailedRatings[key], 0) / reviews.length;
+        reviews.reduce((sum, review) => sum + review.detailedRatings.value, 0) / reviews.length;
 
       return { feature, rating };
     });

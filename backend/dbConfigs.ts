@@ -9,14 +9,7 @@ class Database {
 
   dbConnection() {
     const dbType = process.env.NODE_ENV === 'production' ? 'prod' : 'dev';
-    const url =
-      `mongodb://${ 
-      process.env.COSMOSDB_HOST 
-      }:${ 
-      process.env.COSMOSDB_PORT 
-      }/${ 
-      process.env.COSMOSDB_DBNAME 
-      }?ssl=true&replicaSet=globaldb`;
+    const url = `mongodb://${process.env.COSMOSDB_HOST}:${process.env.COSMOSDB_PORT}/${process.env.COSMOSDB_DBNAME}?ssl=true&replicaSet=globaldb`;
 
     // const forceProd = false;
 
@@ -25,13 +18,13 @@ class Database {
     //   dbType = 'prod';
     // }
     const configs = {
-      // auth: {
-      //   username: process.env.COSMOSDB_USER,
-      //   password: process.env.COSMOSDB_PASSWORD
-      // },
+      auth: {
+        username: process.env.COSMOSDB_USER,
+        password: process.env.COSMOSDB_PASSWORD,
+      },
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      useFindAndModify: false,
+      // useFindAndModify: false,
     };
 
     if (url) {

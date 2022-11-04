@@ -1,13 +1,5 @@
 import { Document } from 'mongoose';
-
-export interface DetailedRating {
-  readonly location: number;
-  readonly safety: number;
-  readonly value: number;
-  readonly maintenance: number;
-  readonly communication: number;
-  readonly conditions: number;
-}
+import { DetailedRating } from '../../common/types/db-types';
 
 export interface IReviewDocument extends Document {
   readonly aptId: string | null;
