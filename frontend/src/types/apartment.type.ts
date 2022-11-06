@@ -1,6 +1,6 @@
 import { IDocument } from './index.type';
 
-export interface IApartmentDocument extends Document {
+export interface IApartmentDocument extends IDocument {
   readonly id: number;
   readonly name: string;
   readonly address: string; // may change to placeID for Google Maps integration

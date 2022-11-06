@@ -23,6 +23,7 @@ const PhotoCarousel = ({ photos, open, onClose }: Props) => (
   <CenteredModal open={open} onClose={onClose} disableRestoreFocus>
     <Container>
       <Carousel autoPlay={false}>
+        console.log("photos"); console.log(photos);
         {photos.map((src, index) => {
           return (
             <ImageBox key={index}>

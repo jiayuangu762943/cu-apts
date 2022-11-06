@@ -237,7 +237,11 @@ const LandlordPage = (): ReactElement => {
 
   const InfoSection = landlordData && (
     <Grid item xs={12} sm={4}>
-      <InfoFeatures {...landlordData} buildings={buildings} />
+      <InfoFeatures
+        contact={landlordData.contact == null ? '' : landlordData.contact}
+        address={landlordData.address == null ? '' : landlordData.address}
+        buildings={buildings}
+      />
     </Grid>
   );
 

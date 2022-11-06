@@ -1,6 +1,7 @@
 import { Document } from 'mongoose';
 
 export interface ILandlordDocument extends Document {
+  readonly id: number;
   readonly name: string;
   readonly avgRating: number;
   readonly photos: readonly string[]; // can be empty

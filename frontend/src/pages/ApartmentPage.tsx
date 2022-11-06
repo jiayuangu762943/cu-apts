@@ -96,12 +96,14 @@ const ApartmentPage = (): ReactElement => {
     });
   }, [aptId, showConfirmation]);
   useEffect(() => {
-    get<Apartment[]>(`/buildings/${apt?.landlordId}`, {
-      callback: setBuildings,
-    });
-    get<Landlord>(`/landlord/${apt?.landlordId}`, {
-      callback: setLandlordData,
-    });
+    if (apt !== undefined) {
+      get<Apartment[]>(`/buildings/${apt.landlordId}`, {
+        callback: setBuildings,
+      });
+      get<Landlord>(`/landlord/${apt.landlordId}`, {
+        callback: setLandlordData,
+      });
+    }
   }, [apt]);
 
   useEffect(() => {
@@ -123,19 +125,21 @@ const ApartmentPage = (): ReactElement => {
   }, [aptData, apt, landlordData, buildings, reviewData, aveRatingInfo, otherProperties]);
 
   useEffect(() => {
-    get<CardData[]>(`/buildings/all/${apt?.landlordId}`, {
-      callback: setOtherproperties,
-    });
+    if (apt !== undefined) {
+      get<CardData[]>(`/buildings/all/${apt.landlordId}`, {
+        callback: setOtherproperties,
+      });
+    }
   }, [apt]);
 
   const calculateAveRating = (reviews: ReviewWithId[]): RatingInfo[] => {
     const features = ['location', 'safety', 'value', 'maintenance', 'communication', 'conditions'];
     return features.map((feature) => {
       let key = feature as keyof DetailedRating;
-      console.log('here');
-      console.log(reviews);
+      // console.log('here');
+      // console.log(reviews[0]);
       let rating =
-        reviews.reduce((sum, review) => sum + review.detailedRatings.value, 0) / reviews.length;
+        reviews.reduce((sum, review) => sum + review.detailedRatings[key], 0) / reviews.length;
 
       return { feature, rating };
     });
@@ -221,7 +225,7 @@ const ApartmentPage = (): ReactElement => {
         landlordId={apt!.landlordId!}
         onSuccess={showConfirmationToast}
         toastTime={toastTime}
-        aptId={apt.id}
+        aptId={apt.id.toString()}
         aptName={apt.name}
         // user={user}
       />
@@ -323,7 +327,7 @@ const ApartmentPage = (): ReactElement => {
     <Grid item xs={12} sm={4}>
       <AptInfo
         landlord={landlordData.name}
-        contact={landlordData.contact}
+        contact={landlordData.contact === undefined ? null : landlordData.contact}
         address={apt!.address}
         buildings={otherProperties.filter((prop) => prop.buildingData.name !== apt!.name)}
       />
@@ -336,6 +340,7 @@ const ApartmentPage = (): ReactElement => {
     <LinearProgress />
   ) : (
     <>
+      {landlordData && console.log(landlordData.photos)}
       {landlordData && (
         <Container>
           <ApartmentHeader

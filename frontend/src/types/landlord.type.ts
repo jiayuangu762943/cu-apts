@@ -1,6 +1,6 @@
 import { IDocument } from './index.type';
 
-export interface ILandlordDocument extends Document {
+export interface ILandlordDocument extends IDocument {
   readonly id: number;
   readonly name: string;
   readonly avgRating: number;

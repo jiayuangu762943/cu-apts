@@ -81,12 +81,14 @@ app.post('/new-review', async (req, res) => {
 app.get('/review/:idType/:id', async (req, res) => {
   const { idType, id } = req.params;
 
-  const reviewDocs = await ReviewsCollection.where(idType).equals(id).exec();
-  const reviews: Review[] = reviewDocs.map((doc) => {
-    const review = { ...doc, date: doc.date } as ReviewInternal;
-    return { ...review, id: doc.id } as ReviewWithId;
-  });
-  res.status(200).send(JSON.stringify(reviews));
+  // const reviewDocs = await ReviewsCollection.where(idType).equals(id).exec();
+  const reviews = await ReviewsCollection.find({ id: id });
+  // const reviews: Review[] = reviewDocs.map((doc) => {
+  //   const review = { ...doc, date: doc.date } as ReviewInternal;
+  //   return { ...review, id: doc.id } as ReviewWithId;
+  // });
+  // res.status(200).send(JSON.stringify(reviews));
+  res.status(200).send(reviews);
 });
 
 app.get('/apts/:ids', async (req, res) => {
@@ -95,11 +97,14 @@ app.get('/apts/:ids', async (req, res) => {
     const idsList = ids.split(',');
     const aptsArr = await Promise.all(
       idsList.map(async (id) => {
-        const snapshot = await ApartmentsCollection.findById(id).exec();
+        // const snapshot = await ApartmentsCollection.findById(id).exec();
+        const snapshot = await ApartmentsCollection.findOne({ id: id }).exec();
         if (snapshot == null) {
           throw new Error('Invalid id');
         }
-        return { id, ...snapshot } as ApartmentWithId;
+        // return { id, ...snapshot } as ApartmentWithId;
+        // return snapshot as ApartmentWithId;
+        return snapshot;
       })
     );
     res.status(200).send(JSON.stringify(aptsArr));
@@ -112,11 +117,12 @@ app.get('/landlord/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const doc = await LandlordsCollection.findById(id).exec();
+    const doc = await LandlordsCollection.findOne({ id: id }).exec();
     if (doc == null) {
       throw new Error('Invalid id');
     }
-    const data = doc as Landlord;
+    // const data = doc as Landlord;
+    const data = doc as LandlordWithId;
     res.status(201).send(data);
   } catch (err) {
     res.status(400).send(err);
@@ -127,8 +133,8 @@ app.get('/buildings/:landlordId', async (req, res) => {
   try {
     const { landlordId } = req.params;
     const buildingRefs = await ApartmentsCollection.where('landlordId').equals(landlordId).exec();
-    const buildings = buildingRefs.map((doc) => doc as Apartment);
-    res.status(201).send(buildings);
+    // const buildings = buildingRefs.map((doc) => doc as Apartment);
+    res.status(201).send(buildingRefs);
   } catch (err) {
     res.status(400).send(err);
   }
@@ -137,15 +143,19 @@ app.get('/buildings/:landlordId', async (req, res) => {
 const pageData = async (buildings: ApartmentWithId[]) =>
   Promise.all(
     buildings.map(async (buildingData) => {
-      const { id, landlordId } = buildingData;
-      if (landlordId === null) {
+      // const { id, landlordId } = buildingData;
+      // if (landlordId === null) {
+      //   throw new Error('Invalid landlordId');
+      // }
+      if (buildingData.landlordId === null) {
         throw new Error('Invalid landlordId');
       }
 
-      const reviewList = await ReviewsCollection.where(`aptId`).equals(id).exec();
+      const reviewList = await ReviewsCollection.find({ aptId: buildingData.id });
+      // const reviewList = await ReviewsCollection.where(`aptId`).equals(id).exec();
       // const landlordDoc = await LandlordsCollection.findById(landlordId).exec();
       const company = await LandlordsCollection.where(`id`)
-        .equals(landlordId)
+        .equals(buildingData.landlordId)
         .select('name')
         .exec();
 
@@ -161,10 +171,14 @@ const pageData = async (buildings: ApartmentWithId[]) =>
 
 app.get('/buildings/all/:landlordId', async (req, res) => {
   const { landlordId } = req.params;
-  const buildingDocs = await ApartmentsCollection.where('landlordId').equals(landlordId).exec();
-  const buildings: ApartmentWithId[] = buildingDocs.map(
-    (doc) => ({ id: doc.id, ...doc } as ApartmentWithId)
-  );
+  // const buildingDocs = await ApartmentsCollection.where('landlordId').equals(landlordId).exec();
+  // const buildings: ApartmentWithId[] = buildingDocs.map(
+  //   (doc) => ({ id: doc.id, ...doc } as ApartmentWithId)
+  // );
+  //   const buildings: ApartmentWithId[] = buildingDocs.map(
+  //   (doc) => ({ _id: doc._id as string, ...doc } as ApartmentWithId)
+  // );
+  const buildings = await ApartmentsCollection.find({ id: landlordId }).exec();
   res.status(200).send(JSON.stringify(await pageData(buildings)));
 });
 
@@ -182,14 +196,17 @@ app.post('/new-landlord', async (req, res) => {
 const isLandlord = (obj: LandlordWithId | ApartmentWithId): boolean => 'contact' in obj;
 app.post('/set-data', async (req, res) => {
   try {
-    const landlordDocs = await LandlordsCollection.find().exec();
-    const landlords: LandlordWithId[] = landlordDocs.map(
-      (landlord) => ({ id: landlord.id, ...landlord } as LandlordWithId)
-    );
-    const aptDocs = await ApartmentsCollection.find().exec();
-    const apts: ApartmentWithId[] = aptDocs.map(
-      (apt) => ({ id: apt.id, ...apt } as ApartmentWithId)
-    );
+    // const landlordDocs = await LandlordsCollection.find().exec();
+    // const landlords: LandlordWithId[] = landlordDocs.map(
+    //   (landlord) => ({ _id: landlord._id, ...landlord } as LandlordWithId)
+    // );
+    // const aptDocs = await ApartmentsCollection.find().exec();
+    // const apts: ApartmentWithId[] = aptDocs.map(
+    //   // (apt) => ({ id: apt.id, ...apt } as ApartmentWithId)
+    //   (apt) => ({ _id: apt._id, ...apt } as ApartmentWithId)
+    // );
+    const landlords = await LandlordsCollection.find();
+    const apts = await ApartmentsCollection.find();
     app.set('landlords', landlords);
     app.set('apts', apts);
 
@@ -227,15 +244,21 @@ app.get('/search', async (req, res) => {
 
 app.get('/page-data/:page', async (req, res) => {
   const { page } = req.params;
+  // const collection =
   const collection =
     page === 'home'
-      ? await ApartmentsCollection.find().limit(3).exec()
-      : await ApartmentsCollection.find().limit(12).exec();
+      ? await ApartmentsCollection.find({}).limit(3)
+      : await ApartmentsCollection.find({}).limit(12);
   // const buildingDocs = collection as Apartment[];
-  const buildings: ApartmentWithId[] = collection.map(
-    (doc) => ({ id: doc.id, ...doc } as ApartmentWithId)
-  );
-  res.status(200).send(JSON.stringify(await pageData(buildings)));
+  // const buildings: ApartmentWithId[] = collection.map(
+  //   (doc) => ({ _id: doc._id, ...doc } as ApartmentWithId)
+  // );
+
+  console.log('collection');
+  // console.log(buildings);
+  // res.status(200).send(pageData(buildings));
+  // res.status(200).send(buildings);
+  res.status(200).send(JSON.stringify(await pageData(collection)));
 });
 
 // const likeHandler =

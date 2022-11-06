@@ -1,7 +1,11 @@
-import { Document } from 'mongoose';
+// import { Document } from 'mongoose';
+import { IReviewDocument } from '../../frontend/src/types/review.type';
+import { ILandlordDocument } from '../../frontend/src/types/landlord.type';
+import { IApartmentDocument } from '../../frontend/src/types/apartment.type';
 
 type Id = {
-  readonly id: string;
+  // readonly _id: string;
+  readonly _id: any;
 };
 
 type StringSet = Record<string, boolean>;
@@ -25,23 +29,17 @@ export type Review = {
   readonly photos: readonly string[];
   readonly reviewText: string;
 };
+//
+// export type Review = IReviewDocument;
 
-export type ReviewWithId = Review & Id;
+// export type ReviewWithId = Review & Id;
+// export type ReviewWithId = IReviewDocument & Id;
+export type ReviewWithId = IReviewDocument & Id;
 
-export type ReviewInternal = Review & {};
+// export type ReviewInternal = Review & {};
+export type ReviewInternal = IReviewDocument & {};
 
-export type Landlord = {
-  readonly name: string;
-  readonly contact: string | null;
-  readonly avgRating: number;
-  readonly profilePhoto?: string;
-  readonly photos: readonly string[]; // can be empty
-  readonly reviews: readonly string[]; // array of Review IDs in reviews collection
-  readonly properties: readonly string[]; // array of Apartment IDs in apartments collection
-  readonly address: string | null;
-};
-
-// export interface ILandLordDocument Landlord = {
+// export type Landlord = {
 //   readonly name: string;
 //   readonly contact: string | null;
 //   readonly avgRating: number;
@@ -51,8 +49,9 @@ export type Landlord = {
 //   readonly properties: readonly string[]; // array of Apartment IDs in apartments collection
 //   readonly address: string | null;
 // };
-
-export type LandlordWithId = Landlord & Id;
+export type Landlord = ILandlordDocument;
+// export type LandlordWithId = Landlord & Id;
+export type LandlordWithId = ILandlordDocument & Id;
 export type LandlordWithLabel = LandlordWithId & { readonly label: 'LANDLORD' };
 
 export type Apartment = {
@@ -65,7 +64,9 @@ export type Apartment = {
   readonly area: 'COLLEGETOWN' | 'WEST' | 'NORTH' | 'DOWNTOWN' | 'OTHER';
 };
 
-export type ApartmentWithId = Apartment & Id;
+// export type ApartmentWithId = Apartment & Id;
+export type ApartmentWithId = IApartmentDocument & Id;
+
 export type ApartmentWithLabel = ApartmentWithId & { readonly label: 'APARTMENT' };
 
 export type LandlordOrApartmentWithLabel = LandlordWithLabel | ApartmentWithLabel;

@@ -53,7 +53,7 @@ const reviewSchema = new Schema(
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true, toObject: { virtuals: true }, toJSON: { virtuals: true } }
 );
 
 reviewSchema.plugin(autopopulate);
