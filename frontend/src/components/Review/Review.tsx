@@ -22,10 +22,6 @@ import { colors } from '../../colors';
 
 type Props = {
   readonly review: ReviewWithId;
-  readonly liked: boolean;
-  readonly likeLoading: boolean;
-  // readonly addLike: (reviewId: string) => Promise<void>;
-  // readonly removeLike: (reviewId: string) => Promise<void>;
 };
 
 const useStyles = makeStyles(() => ({
@@ -51,13 +47,7 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
-const ReviewComponent = ({
-  review,
-  liked,
-  likeLoading,
-}: // addLike,
-// removeLike,
-Props): ReactElement => {
+const ReviewComponent = ({ review }: Props): ReactElement => {
   const { detailedRatings, overallRating, date, reviewText, likes, photos } = review;
   const formattedDate = format(new Date(date), 'MMM dd, yyyy').toUpperCase();
   const { root, expand, expandOpen, dateText, button } = useStyles();
@@ -136,11 +126,10 @@ Props): ReactElement => {
         <Grid item container justify="space-between">
           <Grid item>
             <Button
-              color={liked ? 'primary' : 'default'}
+              // color={liked ? 'primary' : 'default'}
               // onClick={() => (liked ? removeLike : addLike)(id)}
               className={button}
               size="small"
-              disabled={likeLoading}
             >
               Helpful {`(${likes || 0})`}
             </Button>

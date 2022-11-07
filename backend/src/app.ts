@@ -81,14 +81,18 @@ app.post('/new-review', async (req, res) => {
 app.get('/review/:idType/:id', async (req, res) => {
   const { idType, id } = req.params;
 
-  // const reviewDocs = await ReviewsCollection.where(idType).equals(id).exec();
-  const reviews = await ReviewsCollection.find({ id: id });
-  // const reviews: Review[] = reviewDocs.map((doc) => {
-  //   const review = { ...doc, date: doc.date } as ReviewInternal;
-  //   return { ...review, id: doc.id } as ReviewWithId;
-  // });
-  // res.status(200).send(JSON.stringify(reviews));
-  res.status(200).send(reviews);
+  const reviewDocs = await ReviewsCollection.where(idType).equals(id).exec();
+  if (reviewDocs === undefined) {
+    res.status(200).send([]);
+  } else {
+    // const reviews = await ReviewsCollection.where(`idType`).equals(id).exec()
+    // const reviews: Review[] = reviewDocs.map((doc) => {
+    //   const review = { ...doc, date: doc.date } as ReviewInternal;
+    //   return { ...review, id: doc.id } as ReviewWithId;
+    // });
+    // res.status(200).send(JSON.stringify(reviews));
+    res.status(200).send(reviewDocs);
+  }
 });
 
 app.get('/apts/:ids', async (req, res) => {
@@ -98,13 +102,14 @@ app.get('/apts/:ids', async (req, res) => {
     const aptsArr = await Promise.all(
       idsList.map(async (id) => {
         // const snapshot = await ApartmentsCollection.findById(id).exec();
-        const snapshot = await ApartmentsCollection.findOne({ id: id }).exec();
+        // const snapshot = await ApartmentsCollection.findOne({ id: id }).exec();
+        const snapshot = await ApartmentsCollection.where('id').equals(Number(id)).exec();
         if (snapshot == null) {
           throw new Error('Invalid id');
         }
         // return { id, ...snapshot } as ApartmentWithId;
         // return snapshot as ApartmentWithId;
-        return snapshot;
+        return snapshot[0];
       })
     );
     res.status(200).send(JSON.stringify(aptsArr));
@@ -141,6 +146,7 @@ app.get('/buildings/:landlordId', async (req, res) => {
 });
 
 const pageData = async (buildings: ApartmentWithId[]) =>
+  // console.log({ aptId: buildings[0].id });
   Promise.all(
     buildings.map(async (buildingData) => {
       // const { id, landlordId } = buildingData;
@@ -151,15 +157,18 @@ const pageData = async (buildings: ApartmentWithId[]) =>
         throw new Error('Invalid landlordId');
       }
 
-      const reviewList = await ReviewsCollection.find({ aptId: buildingData.id });
+      // const reviewList = await ReviewsCollection.where('aptId').equals(buildingData.id).exec();
       // const reviewList = await ReviewsCollection.where(`aptId`).equals(id).exec();
       // const landlordDoc = await LandlordsCollection.findById(landlordId).exec();
-      const company = await LandlordsCollection.where(`id`)
-        .equals(buildingData.landlordId)
+      const company = await LandlordsCollection.where('id')
+        .equals(Number(buildingData.landlordId))
         .select('name')
         .exec();
 
-      const numReviews = reviewList.length;
+      const numReviews = await ReviewsCollection.where('aptId')
+        .equals(String(buildingData.id))
+        .count()
+        .exec();
 
       return {
         buildingData,
@@ -178,7 +187,7 @@ app.get('/buildings/all/:landlordId', async (req, res) => {
   //   const buildings: ApartmentWithId[] = buildingDocs.map(
   //   (doc) => ({ _id: doc._id as string, ...doc } as ApartmentWithId)
   // );
-  const buildings = await ApartmentsCollection.find({ id: landlordId }).exec();
+  const buildings = await ApartmentsCollection.find({ landlordId: landlordId }).exec();
   res.status(200).send(JSON.stringify(await pageData(buildings)));
 });
 
@@ -254,11 +263,37 @@ app.get('/page-data/:page', async (req, res) => {
   //   (doc) => ({ _id: doc._id, ...doc } as ApartmentWithId)
   // );
 
-  console.log('collection');
+  // console.log('collection');
   // console.log(buildings);
   // res.status(200).send(pageData(buildings));
   // res.status(200).send(buildings);
-  res.status(200).send(JSON.stringify(await pageData(collection)));
+  console.log(collection[0].id);
+  // buildings.map(async (buildingData) => {
+  //   // const { id, landlordId } = buildingData;
+  //   // if (landlordId === null) {
+  //   //   throw new Error('Invalid landlordId');
+  //   // }
+  //   if (buildingData.landlordId === null) {
+  //     throw new Error('Invalid landlordId');
+  //   }
+
+  //   const reviewList = await ReviewsCollection.where('aptId').equals(buildingData.id).exec();
+  //   console.log("");
+  //   // const reviewList = await ReviewsCollection.where(`aptId`).equals(id).exec();
+  //   // const landlordDoc = await LandlordsCollection.findById(landlordId).exec();
+  //   const company = await LandlordsCollection.where('id')
+  //     .equals(buildingData.landlordId)
+  //     .select('name')
+  //     .exec();
+
+  //   const numReviews = reviewList.length;
+
+  // return {
+  // buildingData,
+  // numReviews,
+  // company,
+  // };
+  res.status(200).send(await pageData(collection));
 });
 
 // const likeHandler =

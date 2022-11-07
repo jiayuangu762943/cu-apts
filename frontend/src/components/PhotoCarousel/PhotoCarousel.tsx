@@ -19,21 +19,24 @@ const ImageBox = styled(Box)({
   margin: 'auto',
 });
 
-const PhotoCarousel = ({ photos, open, onClose }: Props) => (
-  <CenteredModal open={open} onClose={onClose} disableRestoreFocus>
-    <Container>
-      <Carousel autoPlay={false}>
-        console.log("photos"); console.log(photos);
-        {photos.map((src, index) => {
-          return (
-            <ImageBox key={index}>
-              <CardMedia component="img" src={src} />
-            </ImageBox>
-          );
-        })}
-      </Carousel>
-    </Container>
-  </CenteredModal>
-);
+const PhotoCarousel = ({ photos, open, onClose }: Props) => {
+  console.log('photos');
+  console.log(photos);
+  return (
+    <CenteredModal open={open} onClose={onClose} disableRestoreFocus>
+      <Container>
+        <Carousel autoPlay={false}>
+          {photos?.map((src, index) => {
+            return (
+              <ImageBox key={index}>
+                <CardMedia component="img" src={src} />
+              </ImageBox>
+            );
+          })}
+        </Carousel>
+      </Container>
+    </CenteredModal>
+  );
+};
 
 export default PhotoCarousel;

@@ -25,6 +25,7 @@ import HeartRating from '../components/utils/HeartRating';
 import { CardData } from '../App';
 import { getAverageRating } from '../utils/average';
 import { colors } from '../colors';
+import ReviewComponent from '../components/Review/Review';
 
 export type RatingInfo = {
   feature: string;
@@ -133,13 +134,13 @@ const ApartmentPage = (): ReactElement => {
   }, [apt]);
 
   const calculateAveRating = (reviews: ReviewWithId[]): RatingInfo[] => {
-    const features = ['location', 'safety', 'value', 'maintenance', 'communication', 'conditions'];
+    const features = ['location', 'safety', 'value', 'maintenance', 'communication', 'condition'];
     return features.map((feature) => {
       let key = feature as keyof DetailedRating;
-      // console.log('here');
-      // console.log(reviews[0]);
       let rating =
-        reviews.reduce((sum, review) => sum + review.detailedRatings[key], 0) / reviews.length;
+        reviews === undefined
+          ? 0
+          : reviews.reduce((sum, review) => sum + review.detailedRatings[key], 0) / reviews.length;
 
       return { feature, rating };
     });
@@ -242,8 +243,10 @@ const ApartmentPage = (): ReactElement => {
       <Grid container alignItems="center">
         <Grid container spacing={1} sm={12}>
           <Grid item>
-            <Typography variant="h6">Reviews ({reviewData.length})</Typography>
-            {reviewData.length === 0 && (
+            <Typography variant="h6">
+              Reviews ({reviewData === undefined ? 0 : reviewData.length})
+            </Typography>
+            {(reviewData === undefined || reviewData.length === 0) && (
               <Typography>No reviews available. Be the first to leave one!</Typography>
             )}
           </Grid>
@@ -263,7 +266,7 @@ const ApartmentPage = (): ReactElement => {
           )}
         </Grid>
 
-        {landlordData && landlordData.photos.length > 0 && (
+        {/* {landlordData && landlordData.photos.length > 0 && (
           <Button
             color="secondary"
             variant="contained"
@@ -272,7 +275,7 @@ const ApartmentPage = (): ReactElement => {
           >
             Show all photos
           </Button>
-        )}
+        )} */}
 
         <Grid item className={leaveReviewContainer} xs={12}>
           <Grid container spacing={1} alignItems="center" justifyContent="space-between">
@@ -341,7 +344,7 @@ const ApartmentPage = (): ReactElement => {
   ) : (
     <>
       {landlordData && console.log(landlordData.photos)}
-      {landlordData && (
+      {landlordData && reviewData && reviewData.length > 0 && (
         <Container>
           <ApartmentHeader
             averageRating={getAverageRating(reviewData)}
@@ -375,7 +378,9 @@ const ApartmentPage = (): ReactElement => {
             )}
             <Grid container item spacing={3}>
               {sortReviews(reviewData, sortBy).map((review, index) => (
-                <Grid item xs={12} key={index}></Grid>
+                <Grid item xs={12} key={index}>
+                  <ReviewComponent review={review} />
+                </Grid>
               ))}
             </Grid>
           </Grid>
