@@ -8,6 +8,10 @@ type Id = {
   readonly _id: any;
 };
 
+type label = {
+  readonly label: string;
+};
+
 type StringSet = Record<string, boolean>;
 
 export type DetailedRating = {
@@ -16,7 +20,7 @@ export type DetailedRating = {
   readonly value: number;
   readonly maintenance: number;
   readonly communication: number;
-  readonly conditions: number;
+  readonly condition: number;
 };
 
 export type Review = {
@@ -67,8 +71,9 @@ export type Apartment = {
 // export type ApartmentWithId = Apartment & Id;
 export type ApartmentWithId = IApartmentDocument & Id;
 
-export type ApartmentWithLabel = ApartmentWithId & { readonly label: 'APARTMENT' };
+// export type ApartmentWithLabel = ApartmentWithId & { readonly label: 'APARTMENT' };
 
+export type ApartmentWithLabel = ApartmentWithId & label;
 export type LandlordOrApartmentWithLabel = LandlordWithLabel | ApartmentWithLabel;
 
 export type Likes = StringSet;

@@ -6,7 +6,7 @@ export type DetailedRating = {
   readonly value: number;
   readonly maintenance: number;
   readonly communication: number;
-  readonly conditions: number;
+  readonly condition: number;
 };
 
 export interface IReviewDocument extends IDocument {

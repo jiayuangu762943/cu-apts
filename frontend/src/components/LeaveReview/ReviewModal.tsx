@@ -53,7 +53,7 @@ const defaultReview: FormData = {
     value: 0,
     maintenance: 0,
     communication: 0,
-    conditions: 0,
+    condition: 0,
   },
   localPhotos: [],
   body: '',
@@ -264,9 +264,9 @@ Props) => {
                   onChange={updateRating('communication')}
                 ></ReviewRating>
                 <ReviewRating
-                  name="conditions"
-                  label="Conditions"
-                  onChange={updateRating('conditions')}
+                  name="condition"
+                  label="Condition"
+                  onChange={updateRating('condition')}
                 ></ReviewRating>
               </Grid>
             </Grid>

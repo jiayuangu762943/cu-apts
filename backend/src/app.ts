@@ -6,7 +6,7 @@ import morgan from 'morgan';
 // import passport from 'passport';
 // import PassportJwt from 'passport-jwt';
 import User from '../models/User';
-import { IUserDocument } from '../types/user.type';
+import { IReviewDocument } from '../types/review.type';
 import {
   Review,
   Landlord,
@@ -61,17 +61,24 @@ db.dbConnection();
 app.post('/new-review', async (req, res) => {
   try {
     const review = req.body as Review;
-    if (review.overallRating === 0 || review.reviewText === '') {
-      res.status(401).send('Error: missing fields');
-    }
+    // const review = req.body as Review;
+    // if (review.overallRating === 0 || review.reviewText === '') {
+    //   res.status(401).send('Error: missing fields');
+    // }
+    const new_id = (await ReviewsCollection.count().exec()) + 1;
+    console.log(new_id);
     const newReviewDoc = new ReviewsCollection({
       ...review,
+      // ...req.body,
+      id: new_id,
       date: new Date(review.date),
+      // date: new Date(req.date),
       likes: 0,
     });
-
-    await newReviewDoc.save();
-    res.status(201).send(newReviewDoc.id);
+    const newReview = await newReviewDoc.save();
+    // await newReviewDoc.save();
+    console.log(newReview);
+    res.sendStatus(201).send(newReviewDoc.id);
   } catch (err) {
     console.error(err);
     res.status(401).send('Error');
@@ -149,26 +156,19 @@ const pageData = async (buildings: ApartmentWithId[]) =>
   // console.log({ aptId: buildings[0].id });
   Promise.all(
     buildings.map(async (buildingData) => {
-      // const { id, landlordId } = buildingData;
-      // if (landlordId === null) {
-      //   throw new Error('Invalid landlordId');
-      // }
       if (buildingData.landlordId === null) {
         throw new Error('Invalid landlordId');
       }
 
-      // const reviewList = await ReviewsCollection.where('aptId').equals(buildingData.id).exec();
-      // const reviewList = await ReviewsCollection.where(`aptId`).equals(id).exec();
-      // const landlordDoc = await LandlordsCollection.findById(landlordId).exec();
-      const company = await LandlordsCollection.where('id')
+      const company = await LandlordsCollection.find()
+        .where('id')
         .equals(Number(buildingData.landlordId))
         .select('name')
         .exec();
 
-      const numReviews = await ReviewsCollection.where('aptId')
-        .equals(String(buildingData.id))
-        .count()
-        .exec();
+      const numReviews = await ReviewsCollection.countDocuments({
+        aptId: buildingData.id.toString(),
+      }).exec();
 
       return {
         buildingData,
@@ -180,13 +180,6 @@ const pageData = async (buildings: ApartmentWithId[]) =>
 
 app.get('/buildings/all/:landlordId', async (req, res) => {
   const { landlordId } = req.params;
-  // const buildingDocs = await ApartmentsCollection.where('landlordId').equals(landlordId).exec();
-  // const buildings: ApartmentWithId[] = buildingDocs.map(
-  //   (doc) => ({ id: doc.id, ...doc } as ApartmentWithId)
-  // );
-  //   const buildings: ApartmentWithId[] = buildingDocs.map(
-  //   (doc) => ({ _id: doc._id as string, ...doc } as ApartmentWithId)
-  // );
   const buildings = await ApartmentsCollection.find({ landlordId: landlordId }).exec();
   res.status(200).send(JSON.stringify(await pageData(buildings)));
 });
@@ -205,17 +198,8 @@ app.post('/new-landlord', async (req, res) => {
 const isLandlord = (obj: LandlordWithId | ApartmentWithId): boolean => 'contact' in obj;
 app.post('/set-data', async (req, res) => {
   try {
-    // const landlordDocs = await LandlordsCollection.find().exec();
-    // const landlords: LandlordWithId[] = landlordDocs.map(
-    //   (landlord) => ({ _id: landlord._id, ...landlord } as LandlordWithId)
-    // );
-    // const aptDocs = await ApartmentsCollection.find().exec();
-    // const apts: ApartmentWithId[] = aptDocs.map(
-    //   // (apt) => ({ id: apt.id, ...apt } as ApartmentWithId)
-    //   (apt) => ({ _id: apt._id, ...apt } as ApartmentWithId)
-    // );
-    const landlords = await LandlordsCollection.find();
-    const apts = await ApartmentsCollection.find();
+    const landlords = await LandlordsCollection.find({}).exec();
+    const apts = await ApartmentsCollection.find({}).exec();
     app.set('landlords', landlords);
     app.set('apts', apts);
 
@@ -228,23 +212,40 @@ app.post('/set-data', async (req, res) => {
 app.get('/search', async (req, res) => {
   try {
     const query = req.query.q as string;
-    const landlords = req.app.get('landlords');
-    const apts = req.app.get('apts');
-    const aptsLandlords: (LandlordWithId | ApartmentWithId)[] = [...landlords, ...apts];
+    const apts = await ApartmentsCollection.find({}).lean().exec();
 
     const options = {
       keys: ['name', 'address'],
     };
-    const fuse = new Fuse(aptsLandlords, options);
+    const fuse = new Fuse(apts, options);
     const results = fuse.search(query).slice(0, 5);
     const resultItems = results.map((result) => result.item);
 
-    const resultsWithType: (LandlordWithLabel | ApartmentWithLabel)[] = resultItems.map((result) =>
-      isLandlord(result)
-        ? ({ label: 'LANDLORD', ...result } as LandlordWithLabel)
-        : ({ label: 'APARTMENT', ...result } as ApartmentWithLabel)
+    const resultsWithType: (LandlordWithLabel | ApartmentWithLabel)[] = resultItems.map(
+      (result) => ({ label: 'APARTMENT', ...result } as ApartmentWithLabel)
     );
     res.status(200).send(JSON.stringify(resultsWithType));
+  } catch (err) {
+    console.error(err);
+    res.status(400).send('Error');
+  }
+});
+
+app.get('/search-results', async (req, res) => {
+  try {
+    const query = req.query.q as string;
+    const apts = req.app.get('apts');
+    const aptsWithType: ApartmentWithId[] = apts;
+
+    const options = {
+      keys: ['name', 'address'],
+    };
+
+    const fuse = new Fuse(aptsWithType, options);
+    const results = fuse.search(query);
+    const resultItems = results.map((result) => result.item);
+
+    res.status(200).send(JSON.stringify(await pageData(resultItems)));
   } catch (err) {
     console.error(err);
     res.status(400).send('Error');
@@ -258,41 +259,7 @@ app.get('/page-data/:page', async (req, res) => {
     page === 'home'
       ? await ApartmentsCollection.find({}).limit(3)
       : await ApartmentsCollection.find({}).limit(12);
-  // const buildingDocs = collection as Apartment[];
-  // const buildings: ApartmentWithId[] = collection.map(
-  //   (doc) => ({ _id: doc._id, ...doc } as ApartmentWithId)
-  // );
 
-  // console.log('collection');
-  // console.log(buildings);
-  // res.status(200).send(pageData(buildings));
-  // res.status(200).send(buildings);
-  console.log(collection[0].id);
-  // buildings.map(async (buildingData) => {
-  //   // const { id, landlordId } = buildingData;
-  //   // if (landlordId === null) {
-  //   //   throw new Error('Invalid landlordId');
-  //   // }
-  //   if (buildingData.landlordId === null) {
-  //     throw new Error('Invalid landlordId');
-  //   }
-
-  //   const reviewList = await ReviewsCollection.where('aptId').equals(buildingData.id).exec();
-  //   console.log("");
-  //   // const reviewList = await ReviewsCollection.where(`aptId`).equals(id).exec();
-  //   // const landlordDoc = await LandlordsCollection.findById(landlordId).exec();
-  //   const company = await LandlordsCollection.where('id')
-  //     .equals(buildingData.landlordId)
-  //     .select('name')
-  //     .exec();
-
-  //   const numReviews = reviewList.length;
-
-  // return {
-  // buildingData,
-  // numReviews,
-  // company,
-  // };
   res.status(200).send(await pageData(collection));
 });
 
