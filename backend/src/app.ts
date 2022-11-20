@@ -3,10 +3,12 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import Fuse from 'fuse.js';
 import morgan from 'morgan';
-// import passport from 'passport';
-// import PassportJwt from 'passport-jwt';
+import passport from 'passport';
+import PassportJwt from 'passport-jwt';
+import { IUserDocument } from '../types/user.type';
+import jwt from 'jsonwebtoken';
 import User from '../models/User';
-import { IReviewDocument } from '../types/review.type';
+import passportGoogle from './auth';
 import {
   Review,
   Landlord,
@@ -35,48 +37,96 @@ app.use(cors({ origin: '*' }));
 app.use(morgan('combined'));
 app.use(express.static(__dirname)); //here is important thing - no static directory, because all static :)
 
-// app.use(passport.initialize());
-// const { Strategy: JwtStrategy, ExtractJwt } = PassportJwt;
-// const opts = {
-//   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-//   secretOrKey: process.env.AUTH_SECRET,
-// };
-// passport.use(
-//   new JwtStrategy(opts, (jwtPayload, done) => {
-//     User.findById(jwtPayload._id, (err: any, user: IUserDocument) => {
-//       if (err) {
-//         return done(err, false);
-//       }
-//       if (user) {
-//         return done(null, user);
-//       }
-//       return done(null, false);
-//     });
-//   })
-// );
+// passport
+declare global {
+  namespace Express {
+    interface User extends IUserDocument {}
+  }
+}
+
+app.use(passport.initialize());
+const { Strategy: JwtStrategy, ExtractJwt } = PassportJwt;
+const opts = {
+  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+  secretOrKey: process.env.AUTH_SECRET,
+};
+passport.use(
+  new JwtStrategy(opts, (jwtPayload, done) => {
+    User.findById(jwtPayload._id, (err: any, user: IUserDocument) => {
+      if (err) {
+        return done(err, false);
+      }
+      if (user) {
+        return done(null, user);
+      }
+      return done(null, false);
+    });
+  })
+);
 
 db.dbConnection();
 // import { Section }  './firebase-config/types';
+
+app.get(
+  'auth/google',
+  // @ts-ignore
+  passportGoogle.authenticate('google', {
+    scope: [
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile',
+    ],
+    accessType: 'offline',
+    prompt: 'consent',
+  })
+);
+
+app.get(
+  'auth/google/callback',
+  passportGoogle.authenticate('google', {
+    failureRedirect: 'auth/google-failure-redirect',
+    session: false,
+  }),
+  (req, res) => {
+    // @ts-ignore
+    const token = jwt.sign({ _id: req.user._id }, process.env.AUTH_SECRET);
+    res.redirect(`${process.env.CLIENT_DOMAIN}/auth/callback?token=${token}`);
+  }
+);
+
+app.post('auth/register', async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      const newUser = await new User({ ...req.body, provider: 'email' }).save();
+      if (!process.env.AUTH_SECRET)
+        throw new Error('Auth secret environment variable is undefined');
+      const token = jwt.sign({ _id: newUser._id }, process.env.AUTH_SECRET);
+      res.send({ ...newUser.toObject(), token });
+    } else {
+      res.status(500).send('User already exists');
+    }
+  } catch (e) {
+    res.status(500).send(e);
+  }
+});
 
 app.post('/new-review', async (req, res) => {
   try {
     const review = req.body as Review;
     // const review = req.body as Review;
-    // if (review.overallRating === 0 || review.reviewText === '') {
-    //   res.status(401).send('Error: missing fields');
-    // }
+    if (review.overallRating === 0 || review.reviewText === '') {
+      res.status(401).send('Error: missing fields');
+    }
     const new_id = (await ReviewsCollection.count().exec()) + 1;
-    console.log(new_id);
     const newReviewDoc = new ReviewsCollection({
       ...review,
-      // ...req.body,
       id: new_id,
       date: new Date(review.date),
-      // date: new Date(req.date),
       likes: 0,
     });
     const newReview = await newReviewDoc.save();
-    // await newReviewDoc.save();
     console.log(newReview);
     res.sendStatus(201).send(newReviewDoc.id);
   } catch (err) {
@@ -87,17 +137,10 @@ app.post('/new-review', async (req, res) => {
 
 app.get('/review/:idType/:id', async (req, res) => {
   const { idType, id } = req.params;
-
   const reviewDocs = await ReviewsCollection.where(idType).equals(id).exec();
   if (reviewDocs === undefined) {
     res.status(200).send([]);
   } else {
-    // const reviews = await ReviewsCollection.where(`idType`).equals(id).exec()
-    // const reviews: Review[] = reviewDocs.map((doc) => {
-    //   const review = { ...doc, date: doc.date } as ReviewInternal;
-    //   return { ...review, id: doc.id } as ReviewWithId;
-    // });
-    // res.status(200).send(JSON.stringify(reviews));
     res.status(200).send(reviewDocs);
   }
 });
@@ -108,14 +151,10 @@ app.get('/apts/:ids', async (req, res) => {
     const idsList = ids.split(',');
     const aptsArr = await Promise.all(
       idsList.map(async (id) => {
-        // const snapshot = await ApartmentsCollection.findById(id).exec();
-        // const snapshot = await ApartmentsCollection.findOne({ id: id }).exec();
         const snapshot = await ApartmentsCollection.where('id').equals(Number(id)).exec();
         if (snapshot == null) {
           throw new Error('Invalid id');
         }
-        // return { id, ...snapshot } as ApartmentWithId;
-        // return snapshot as ApartmentWithId;
         return snapshot[0];
       })
     );
@@ -145,7 +184,6 @@ app.get('/buildings/:landlordId', async (req, res) => {
   try {
     const { landlordId } = req.params;
     const buildingRefs = await ApartmentsCollection.where('landlordId').equals(landlordId).exec();
-    // const buildings = buildingRefs.map((doc) => doc as Apartment);
     res.status(201).send(buildingRefs);
   } catch (err) {
     res.status(400).send(err);
@@ -153,7 +191,6 @@ app.get('/buildings/:landlordId', async (req, res) => {
 });
 
 const pageData = async (buildings: ApartmentWithId[]) =>
-  // console.log({ aptId: buildings[0].id });
   Promise.all(
     buildings.map(async (buildingData) => {
       if (buildingData.landlordId === null) {
@@ -261,6 +298,50 @@ app.get('/page-data/:page', async (req, res) => {
       : await ApartmentsCollection.find({}).limit(12);
 
   res.status(200).send(await pageData(collection));
+});
+
+app.post('/user', async (req, res) => {
+  try {
+    const doc = await new User(req.body).save();
+    res.send(doc);
+  } catch (e) {
+    res.status(500).send(e);
+  }
+});
+
+app.get('/user/current', async (req, res) => {
+  try {
+    res.send(req.user);
+  } catch (e) {
+    res.status(500).send(e);
+  }
+});
+
+app.get('/user/:id', async (req, res) => {
+  try {
+    const doc = await User.findById(req.params.id);
+    res.send(doc);
+  } catch (e) {
+    res.status(500).send(e);
+  }
+});
+
+app.put('/user/:id', async (req, res) => {
+  try {
+    const note = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.send(note);
+  } catch (e) {
+    res.status(500).send(e);
+  }
+});
+
+app.delete('/user/:id', async (req, res) => {
+  try {
+    const result = await User.findByIdAndDelete(req.params.id);
+    res.send(result);
+  } catch (e) {
+    res.status(500).send(e);
+  }
 });
 
 // const likeHandler =
