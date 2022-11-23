@@ -9,9 +9,11 @@ const Login = () => {
 
   const handleGoogleLogin = () => {
     const domain =
-      import.meta.env.VITE_NODE_ENV === 'production'
+      //   import.meta.env.VITE_NODE_ENV === 'production'
+      process.env.VITE_NODE_ENV === 'production'
         ? window.location.origin
-        : import.meta.env.VITE_SERVER_DOMAIN;
+        : process.env.VITE_SERVER_DOMAIN;
+    // : import.meta.env.VITE_SERVER_DOMAIN;
     dispatch(setRedirectUrl(router.location.state?.prevPath));
     window.location.replace(`${domain}/api/public/auth/google`);
   };

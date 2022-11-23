@@ -36,11 +36,8 @@ export type Review = {
 //
 // export type Review = IReviewDocument;
 
-// export type ReviewWithId = Review & Id;
-// export type ReviewWithId = IReviewDocument & Id;
 export type ReviewWithId = IReviewDocument & Id;
 
-// export type ReviewInternal = Review & {};
 export type ReviewInternal = IReviewDocument & {};
 
 // export type Landlord = {
@@ -77,3 +74,8 @@ export type ApartmentWithLabel = ApartmentWithId & label;
 export type LandlordOrApartmentWithLabel = LandlordWithLabel | ApartmentWithLabel;
 
 export type Likes = StringSet;
+
+export type Message = {
+  content: string;
+  timeStamp: Date;
+};

@@ -14,11 +14,12 @@ import axios from 'axios';
 import React, { Dispatch, SetStateAction, useReducer, useState } from 'react';
 import { DetailedRating, Review } from '../../../../common/types/db-types';
 import { splitArr } from '../../utils';
-// import { createAuthHeaders, uploadFile } from '../../utils/firebase';
+import { createAuthHeaders, uploadFile } from '../../utils/firebase';
 import ReviewRating from './ReviewRating';
 import { includesProfanity } from '../../utils/profanity';
 import Toast from './Toast';
 import styles from './ReviewModal.module.scss';
+import { User } from '@firebase/auth-types';
 
 const REVIEW_CHARACTER_LIMIT = 2000;
 const REVIEW_PHOTOS_LIMIT = 3;
@@ -33,7 +34,7 @@ interface Props {
   toastTime: number;
   aptId: string;
   aptName: string;
-  // user: firebase.User | null;
+  user: User | null;
 }
 
 interface FormData {
@@ -95,8 +96,8 @@ const ReviewModal = ({
   toastTime,
   aptId,
   aptName,
-}: // user,
-Props) => {
+  user,
+}: Props) => {
   const [review, dispatch] = useReducer(reducer, defaultReview);
   const [showError, setShowError] = useState(false);
   const [emptyTextError, setEmptyTextError] = useState(false);
@@ -141,11 +142,9 @@ Props) => {
     overallRating,
     ratings,
     body,
-  }: // localPhotos,
-  FormData): Promise<Review> => {
-    // need to connect to azure blob storage to get the all urls of localPhotos
-    // const photos = await Promise.all(localPhotos.map(uploadFile));
-    const photos: readonly string[] = [];
+    localPhotos,
+  }: FormData): Promise<Review> => {
+    const photos = await Promise.all(localPhotos.map(uploadFile));
     return {
       aptId: aptId,
       date: new Date(),
@@ -160,7 +159,7 @@ Props) => {
   const onSubmit = async () => {
     try {
       setSending(true);
-      // const token = await user!.getIdToken(true);
+      const token = await user!.getIdToken(true);
       const data = await formDataToReview(review);
       if (
         data.reviewText === '' ||
@@ -174,8 +173,10 @@ Props) => {
           : setIncludesProfanityError(false);
         return;
       }
+      console.log(data);
       // change post new review api handling
-      const res = await axios.post('/new-review', data);
+      const res = await axios.post('/new-review', data, createAuthHeaders(token));
+      console.log(res.status);
       if (res.status !== 201) {
         throw new Error('Failed to submit review');
       }

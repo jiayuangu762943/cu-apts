@@ -1,26 +1,42 @@
 import React, { ReactElement, useState, useEffect } from 'react';
 import { Box, Container, Typography, makeStyles } from '@material-ui/core';
+import { useParams } from 'react-router-dom';
 import { get } from '../utils/call';
 import styles from './ChatRoomPage.module.scss';
 import { CardData, LocationCardData } from '../App';
 import { colors } from '../colors';
 import ChatHeader from '../components/Chat/ChatHeader';
-import ChatSkeleton from '../components/Chat/ChatSkeleton';
+import { Message } from '../../../common/types/db-types';
 import ChatMessages from '../components/Chat/ChatMessages';
 import ChatInput from '../components/Chat/ChatInput';
 import LinearProgress from '../components/utils/LinearProgress';
 
-type Props = {
-  chatId: Number;
-  profilePic: String;
-  userName: String;
-  
-};
-const ChatRoomPage = ({ chatId, profilePic, userName } : Props)=> {
+// type Props = {
+//   chatId: Number;
+//   profilePic: String;
+//   userName: String;
+// }
+const ChatRoomPage = (): ReactElement => {
   const [loading, setLoading] = useState(true);
-  <div className="chat-messages-container">
+  const [messages, setMessages] = useState<Message[]>([]);
+  const { chatId, profilePic, userName } = useParams<Record<string, string>>();
+  // const user = await getUser(true);
+  useEffect(() => {
+    if (loading) {
+      get<Message[]>(`/messages`, {
+        callback: (data) => {
+          setMessages(data);
+          setLoading(false);
+        },
+      });
+    }
+  }, [loading]);
+
+  return (
+    <div className="chat-messages-container">
       <ChatHeader
         profilePic={profilePic}
+        chatId={Number(chatId)}
         // setSelectedChat={setSelectedChat}
         userName={userName}
       />
@@ -29,17 +45,15 @@ const ChatRoomPage = ({ chatId, profilePic, userName } : Props)=> {
         <LinearProgress />
       ) : messages ? (
         <ChatMessages
-          chatRef={chatRef}
-          chatEndRef={chatEndRef}
-          messages={messages}
-          profilePic={profilePic}
-          user={user}
-          username={username}
+        // messages={messages}
+        // profilePic={profilePic}
+        // user={user}
+        // username={userName}
         />
       ) : null}
 
-      <ChatInput grow={grow} handleSend={handleSend} inputRef={inputRef} />
+      <ChatInput />
     </div>
   );
-}
+};
 export default ChatRoomPage;

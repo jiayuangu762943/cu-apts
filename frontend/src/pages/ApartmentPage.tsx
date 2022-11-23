@@ -17,7 +17,7 @@ import Toast from '../components/LeaveReview/Toast';
 import LinearProgress from '../components/utils/LinearProgress';
 // import { Likes, ReviewWithId } from '../../../common/types/db-types';
 import { ReviewWithId } from '../../../common/types/db-types';
-// import { getUser } from '../utils/firebase';
+import { getUser } from '../utils/firebase';
 import DropDown from '../components/utils/DropDown';
 import { useParams } from 'react-router-dom';
 import NotFoundPage from './NotFoundPage';
@@ -26,6 +26,7 @@ import { CardData } from '../App';
 import { getAverageRating } from '../utils/average';
 import { colors } from '../colors';
 import ReviewComponent from '../components/Review/Review';
+import { User } from '@firebase/auth-types';
 
 export type RatingInfo = {
   feature: string;
@@ -64,9 +65,8 @@ const ApartmentPage = (): ReactElement => {
   const [aptData, setAptData] = useState<ApartmentWithId[]>([]);
   const [apt, setApt] = useState<ApartmentWithId | undefined>(undefined);
   const [loaded, setLoaded] = useState(false);
-  // const [user, setUser] = useState<firebase.User | null>(null);
-  // const [showSignInError, setShowSignInError] = useState(false);
-  const [showSignInError] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [showSignInError, setShowSignInError] = useState(false);
   const [sortBy, setSortBy] = useState<Fields>('date');
   const toastTime = 3500;
   const [notFound, setNotFound] = useState(false);
@@ -169,9 +169,9 @@ const ApartmentPage = (): ReactElement => {
     showToast(setShowConfirmation);
   };
 
-  // const showSignInErrorToast = () => {
-  //   showToast(setShowSignInError);
-  // };
+  const showSignInErrorToast = () => {
+    showToast(setShowSignInError);
+  };
 
   // const likeHelper = (dislike = false) => {
   //   return async (reviewId: string) => {
@@ -206,14 +206,14 @@ const ApartmentPage = (): ReactElement => {
   // const removeLike = likeHelper(true);
 
   const openReviewModal = async () => {
-    // if (!user) {
-    //   let user = await getUser(true);
-    //   setUser(user);
-    //   if (!user) {
-    //     showSignInErrorToast();
-    //     return;
-    //   }
-    // }
+    if (!user) {
+      let user = await getUser(true);
+      setUser(user);
+      if (!user) {
+        showSignInErrorToast();
+        return;
+      }
+    }
     setReviewOpen(true);
   };
 
@@ -228,7 +228,7 @@ const ApartmentPage = (): ReactElement => {
         toastTime={toastTime}
         aptId={apt.id.toString()}
         aptName={apt.name}
-        // user={user}
+        user={user}
       />
       <PhotoCarousel
         photos={landlordData.photos}

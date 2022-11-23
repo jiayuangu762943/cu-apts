@@ -110,7 +110,7 @@ const App = (): ReactElement => {
             <Route path="/apartment/:aptId" component={ApartmentPage} />
             <Route exact path="/notfound" component={NotFoundPage} />
             <Route path="/search" component={SearchResultsPage} />
-            <Route path="/chat" component={ChatRoomPage} />
+            <Route path="/chat/:chatId/:profilePic/:userName" component={ChatRoomPage} />
           </Switch>
         </div>
         <Footer />

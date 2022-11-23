@@ -4,7 +4,10 @@ import { Box, Container, Typography, makeStyles } from '@material-ui/core';
 // import { colors } from '../colors';
 
 type Props = {
-  chatId: Number;
+  messages: string;
+  profilePic: string;
+  // user: firebase.User | null;
+  username: string;
 };
-const ChatMessages = ({ chatId }: Props) => <div className="chat-messages-container"></div>;
+const ChatMessages = () => <div className="chat-messages-container"></div>;
 export default ChatMessages;

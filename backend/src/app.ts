@@ -3,12 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import Fuse from 'fuse.js';
 import morgan from 'morgan';
-import passport from 'passport';
-import PassportJwt from 'passport-jwt';
-import { IUserDocument } from '../types/user.type';
-import jwt from 'jsonwebtoken';
 import User from '../models/User';
-import passportGoogle from './auth';
+import authenticate from './auth';
 import {
   Review,
   Landlord,
@@ -22,100 +18,129 @@ import {
 } from '@common/types/db-types';
 import path from 'path';
 import db from '../dbConfigs';
-// import authenticate from './auth';
+import kafka from 'kafka-node';
 
 import ReviewsCollection from '../models/Reviews';
 import LandlordsCollection from '../models/Landlords';
 import ApartmentsCollection from '../models/Buildings';
-// doc._id can't pass yarn workspace linter tests
+import socketIO from 'socket.io';
+import event from 'events';
+
 const app: Express = express();
 
-dotenv.config();
+const server = http.createServer(app);
+const io = socketIO(server);
+const producer = new kafka.Producer(new kafka.KafkaClient());
+const consumer = new kafka.Consumer(new kafka.KafkaClient(), [{ topic: 'emptytopic', offset: 0 }], {
+  groupId: 'kaanbayram',
+  autoCommit: false,
+});
 
+producer.on('ready', function () {
+  console.log('Producer is ready');
+});
+producer.on('error', function (err: Error) {
+  console.log('Producer is in error state');
+  console.log(err);
+});
+
+dotenv.config();
 app.use(express.json());
+// app.use(express.urlencoded())
 app.use(cors({ origin: '*' }));
 app.use(morgan('combined'));
 app.use(express.static(__dirname)); //here is important thing - no static directory, because all static :)
 
-// passport
-declare global {
-  namespace Express {
-    interface User extends IUserDocument {}
-  }
-}
-
-app.use(passport.initialize());
-const { Strategy: JwtStrategy, ExtractJwt } = PassportJwt;
-const opts = {
-  jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-  secretOrKey: process.env.AUTH_SECRET,
-};
-passport.use(
-  new JwtStrategy(opts, (jwtPayload, done) => {
-    User.findById(jwtPayload._id, (err: any, user: IUserDocument) => {
-      if (err) {
-        return done(err, false);
-      }
-      if (user) {
-        return done(null, user);
-      }
-      return done(null, false);
-    });
-  })
-);
-
 db.dbConnection();
-// import { Section }  './firebase-config/types';
 
-app.get(
-  'auth/google',
-  // @ts-ignore
-  passportGoogle.authenticate('google', {
-    scope: [
-      'https://www.googleapis.com/auth/userinfo.email',
-      'https://www.googleapis.com/auth/userinfo.profile',
-    ],
-    accessType: 'offline',
-    prompt: 'consent',
-  })
-);
-
-app.get(
-  'auth/google/callback',
-  passportGoogle.authenticate('google', {
-    failureRedirect: 'auth/google-failure-redirect',
-    session: false,
-  }),
-  (req, res) => {
-    // @ts-ignore
-    const token = jwt.sign({ _id: req.user._id }, process.env.AUTH_SECRET);
-    res.redirect(`${process.env.CLIENT_DOMAIN}/auth/callback?token=${token}`);
-  }
-);
-
-app.post('auth/register', async (req, res) => {
-  try {
-    const { email } = req.body;
-    const user = await User.findOne({ email });
-
-    if (!user) {
-      const newUser = await new User({ ...req.body, provider: 'email' }).save();
-      if (!process.env.AUTH_SECRET)
-        throw new Error('Auth secret environment variable is undefined');
-      const token = jwt.sign({ _id: newUser._id }, process.env.AUTH_SECRET);
-      res.send({ ...newUser.toObject(), token });
-    } else {
-      res.status(500).send('User already exists');
-    }
-  } catch (e) {
-    res.status(500).send(e);
-  }
+app.post('/send', (req, res) => {
+  const sentMessage = JSON.stringify(req.body.message);
+  const payloads = [{ topic: req.body.topic, messages: sentMessage, partition: 0 }];
+  producer.send(payloads, function (err: Error, data: any) {
+    res.json(data);
+  });
 });
 
-app.post('/new-review', async (req, res) => {
+const kontrol = false;
+app.post('/changetopic', function (req, res) {
+  consumer.addTopics([req.body.topic], (err: Error, added: string[]) => {
+    console.log(added + ' eklendi.');
+  });
+  consumer.resume();
+  // console.log(consumer.payloads[0]);
+  // global.kontrol = true;
+});
+const eventEmitter2 = new event.EventEmitter();
+eventEmitter2.setMaxListeners(150);
+
+app.post('/createtopic', function (req, res) {
+  var client = new kafka.KafkaClient();
+
+  console.log(req.body.createtopic);
+  var topicsToCreate = [
+    {
+      topic: req.body.createtopic,
+      partitions: 1,
+      replicationFactor: 1,
+    },
+  ];
+  client.createTopics(topicsToCreate, (error, result) => {
+    console.log(result);
+  });
+});
+
+const eventEmitter3 = new event.EventEmitter();
+eventEmitter3.setMaxListeners(150);
+
+const eventEmitter = new event.EventEmitter();
+eventEmitter.setMaxListeners(150);
+
+const consumer2 = new kafka.Consumer(
+  new kafka.KafkaClient(),
+  [{ topic: 'emptytopic', offset: 0 }],
+  {
+    groupId: 'kaanbayram',
+    autoCommit: false,
+  }
+);
+
+const dataarray = [];
+consumer.on('message', function (message) {
+  if (kontrol === true) {
+    count = global.dataarray.length;
+    while (count > 0) {
+      global.dataarray.pop();
+      count = count - 1;
+    }
+    global.kontrol = false;
+  }
+
+  console.log(message.value);
+  dataarray.push(message.value);
+  eventEmitter.emit('trigger');
+});
+
+io.on('connection', (socket) => {
+  console.log('User connected');
+  io.sockets.emit('getmessage', { data: dataarray });
+
+  eventEmitter.on('trigger', () => {
+    io.sockets.emit('getmessage', { data: dataarray });
+  });
+});
+
+io.on('connection', (socket) => {
+  console.log('user connected socket2');
+  io.sockets.emit('sendlist', { data: listtopic });
+
+  eventEmitter3.on('trigsend', () => {
+    io.sockets.emit('sendlist', { data: listtopic });
+  });
+});
+
+app.post('/new-review', authenticate, async (req, res) => {
   try {
     const review = req.body as Review;
-    // const review = req.body as Review;
     if (review.overallRating === 0 || review.reviewText === '') {
       res.status(401).send('Error: missing fields');
     }
