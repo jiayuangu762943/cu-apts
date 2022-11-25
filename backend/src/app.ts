@@ -3,10 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import Fuse from 'fuse.js';
 import morgan from 'morgan';
-// import passport from 'passport';
-// import PassportJwt from 'passport-jwt';
 import User from '../models/User';
-import { IUserDocument } from '../types/user.type';
+import authenticate from './auth';
 import {
   Review,
   Landlord,
@@ -20,58 +18,142 @@ import {
 } from '@common/types/db-types';
 import path from 'path';
 import db from '../dbConfigs';
-// import authenticate from './auth';
+import kafka from 'kafka-node';
 
 import ReviewsCollection from '../models/Reviews';
 import LandlordsCollection from '../models/Landlords';
 import ApartmentsCollection from '../models/Buildings';
-// doc._id can't pass yarn workspace linter tests
+import socketIO from 'socket.io';
+import event from 'events';
+
 const app: Express = express();
 
-dotenv.config();
+const server = http.createServer(app);
+const io = socketIO(server);
+const producer = new kafka.Producer(new kafka.KafkaClient());
+const consumer = new kafka.Consumer(new kafka.KafkaClient(), [{ topic: 'emptytopic', offset: 0 }], {
+  groupId: 'kaanbayram',
+  autoCommit: false,
+});
 
+producer.on('ready', function () {
+  console.log('Producer is ready');
+});
+producer.on('error', function (err: Error) {
+  console.log('Producer is in error state');
+  console.log(err);
+});
+
+dotenv.config();
 app.use(express.json());
+// app.use(express.urlencoded())
 app.use(cors({ origin: '*' }));
 app.use(morgan('combined'));
 app.use(express.static(__dirname)); //here is important thing - no static directory, because all static :)
 
-// app.use(passport.initialize());
-// const { Strategy: JwtStrategy, ExtractJwt } = PassportJwt;
-// const opts = {
-//   jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-//   secretOrKey: process.env.AUTH_SECRET,
-// };
-// passport.use(
-//   new JwtStrategy(opts, (jwtPayload, done) => {
-//     User.findById(jwtPayload._id, (err: any, user: IUserDocument) => {
-//       if (err) {
-//         return done(err, false);
-//       }
-//       if (user) {
-//         return done(null, user);
-//       }
-//       return done(null, false);
-//     });
-//   })
-// );
-
 db.dbConnection();
-// import { Section }  './firebase-config/types';
 
-app.post('/new-review', async (req, res) => {
+app.post('/send', (req, res) => {
+  const sentMessage = JSON.stringify(req.body.message);
+  const payloads = [{ topic: req.body.topic, messages: sentMessage, partition: 0 }];
+  producer.send(payloads, function (err: Error, data: any) {
+    res.json(data);
+  });
+});
+
+const kontrol = false;
+app.post('/changetopic', function (req, res) {
+  consumer.addTopics([req.body.topic], (err: Error, added: string[]) => {
+    console.log(added + ' eklendi.');
+  });
+  consumer.resume();
+  // console.log(consumer.payloads[0]);
+  // global.kontrol = true;
+});
+const eventEmitter2 = new event.EventEmitter();
+eventEmitter2.setMaxListeners(150);
+
+app.post('/createtopic', function (req, res) {
+  var client = new kafka.KafkaClient();
+
+  console.log(req.body.createtopic);
+  var topicsToCreate = [
+    {
+      topic: req.body.createtopic,
+      partitions: 1,
+      replicationFactor: 1,
+    },
+  ];
+  client.createTopics(topicsToCreate, (error, result) => {
+    console.log(result);
+  });
+});
+
+const eventEmitter3 = new event.EventEmitter();
+eventEmitter3.setMaxListeners(150);
+
+const eventEmitter = new event.EventEmitter();
+eventEmitter.setMaxListeners(150);
+
+const consumer2 = new kafka.Consumer(
+  new kafka.KafkaClient(),
+  [{ topic: 'emptytopic', offset: 0 }],
+  {
+    groupId: 'kaanbayram',
+    autoCommit: false,
+  }
+);
+
+const dataarray = [];
+consumer.on('message', function (message) {
+  if (kontrol === true) {
+    count = global.dataarray.length;
+    while (count > 0) {
+      global.dataarray.pop();
+      count = count - 1;
+    }
+    global.kontrol = false;
+  }
+
+  console.log(message.value);
+  dataarray.push(message.value);
+  eventEmitter.emit('trigger');
+});
+
+io.on('connection', (socket) => {
+  console.log('User connected');
+  io.sockets.emit('getmessage', { data: dataarray });
+
+  eventEmitter.on('trigger', () => {
+    io.sockets.emit('getmessage', { data: dataarray });
+  });
+});
+
+io.on('connection', (socket) => {
+  console.log('user connected socket2');
+  io.sockets.emit('sendlist', { data: listtopic });
+
+  eventEmitter3.on('trigsend', () => {
+    io.sockets.emit('sendlist', { data: listtopic });
+  });
+});
+
+app.post('/new-review', authenticate, async (req, res) => {
   try {
     const review = req.body as Review;
     if (review.overallRating === 0 || review.reviewText === '') {
       res.status(401).send('Error: missing fields');
     }
+    const new_id = (await ReviewsCollection.count().exec()) + 1;
     const newReviewDoc = new ReviewsCollection({
       ...review,
+      id: new_id,
       date: new Date(review.date),
       likes: 0,
     });
-
-    await newReviewDoc.save();
-    res.status(201).send(newReviewDoc.id);
+    const newReview = await newReviewDoc.save();
+    console.log(newReview);
+    res.sendStatus(201).send(newReviewDoc.id);
   } catch (err) {
     console.error(err);
     res.status(401).send('Error');
@@ -80,13 +162,12 @@ app.post('/new-review', async (req, res) => {
 
 app.get('/review/:idType/:id', async (req, res) => {
   const { idType, id } = req.params;
-
   const reviewDocs = await ReviewsCollection.where(idType).equals(id).exec();
-  const reviews: Review[] = reviewDocs.map((doc) => {
-    const review = { ...doc, date: doc.date } as ReviewInternal;
-    return { ...review, id: doc.id } as ReviewWithId;
-  });
-  res.status(200).send(JSON.stringify(reviews));
+  if (reviewDocs === undefined) {
+    res.status(200).send([]);
+  } else {
+    res.status(200).send(reviewDocs);
+  }
 });
 
 app.get('/apts/:ids', async (req, res) => {
@@ -95,11 +176,11 @@ app.get('/apts/:ids', async (req, res) => {
     const idsList = ids.split(',');
     const aptsArr = await Promise.all(
       idsList.map(async (id) => {
-        const snapshot = await ApartmentsCollection.findById(id).exec();
+        const snapshot = await ApartmentsCollection.where('id').equals(Number(id)).exec();
         if (snapshot == null) {
           throw new Error('Invalid id');
         }
-        return { id, ...snapshot } as ApartmentWithId;
+        return snapshot[0];
       })
     );
     res.status(200).send(JSON.stringify(aptsArr));
@@ -112,11 +193,12 @@ app.get('/landlord/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const doc = await LandlordsCollection.findById(id).exec();
+    const doc = await LandlordsCollection.findOne({ id: id }).exec();
     if (doc == null) {
       throw new Error('Invalid id');
     }
-    const data = doc as Landlord;
+    // const data = doc as Landlord;
+    const data = doc as LandlordWithId;
     res.status(201).send(data);
   } catch (err) {
     res.status(400).send(err);
@@ -127,8 +209,7 @@ app.get('/buildings/:landlordId', async (req, res) => {
   try {
     const { landlordId } = req.params;
     const buildingRefs = await ApartmentsCollection.where('landlordId').equals(landlordId).exec();
-    const buildings = buildingRefs.map((doc) => doc as Apartment);
-    res.status(201).send(buildings);
+    res.status(201).send(buildingRefs);
   } catch (err) {
     res.status(400).send(err);
   }
@@ -137,19 +218,19 @@ app.get('/buildings/:landlordId', async (req, res) => {
 const pageData = async (buildings: ApartmentWithId[]) =>
   Promise.all(
     buildings.map(async (buildingData) => {
-      const { id, landlordId } = buildingData;
-      if (landlordId === null) {
+      if (buildingData.landlordId === null) {
         throw new Error('Invalid landlordId');
       }
 
-      const reviewList = await ReviewsCollection.where(`aptId`).equals(id).exec();
-      // const landlordDoc = await LandlordsCollection.findById(landlordId).exec();
-      const company = await LandlordsCollection.where(`id`)
-        .equals(landlordId)
+      const company = await LandlordsCollection.find()
+        .where('id')
+        .equals(Number(buildingData.landlordId))
         .select('name')
         .exec();
 
-      const numReviews = reviewList.length;
+      const numReviews = await ReviewsCollection.countDocuments({
+        aptId: buildingData.id.toString(),
+      }).exec();
 
       return {
         buildingData,
@@ -161,10 +242,7 @@ const pageData = async (buildings: ApartmentWithId[]) =>
 
 app.get('/buildings/all/:landlordId', async (req, res) => {
   const { landlordId } = req.params;
-  const buildingDocs = await ApartmentsCollection.where('landlordId').equals(landlordId).exec();
-  const buildings: ApartmentWithId[] = buildingDocs.map(
-    (doc) => ({ id: doc.id, ...doc } as ApartmentWithId)
-  );
+  const buildings = await ApartmentsCollection.find({ landlordId: landlordId }).exec();
   res.status(200).send(JSON.stringify(await pageData(buildings)));
 });
 
@@ -182,14 +260,8 @@ app.post('/new-landlord', async (req, res) => {
 const isLandlord = (obj: LandlordWithId | ApartmentWithId): boolean => 'contact' in obj;
 app.post('/set-data', async (req, res) => {
   try {
-    const landlordDocs = await LandlordsCollection.find().exec();
-    const landlords: LandlordWithId[] = landlordDocs.map(
-      (landlord) => ({ id: landlord.id, ...landlord } as LandlordWithId)
-    );
-    const aptDocs = await ApartmentsCollection.find().exec();
-    const apts: ApartmentWithId[] = aptDocs.map(
-      (apt) => ({ id: apt.id, ...apt } as ApartmentWithId)
-    );
+    const landlords = await LandlordsCollection.find({}).exec();
+    const apts = await ApartmentsCollection.find({}).exec();
     app.set('landlords', landlords);
     app.set('apts', apts);
 
@@ -202,21 +274,17 @@ app.post('/set-data', async (req, res) => {
 app.get('/search', async (req, res) => {
   try {
     const query = req.query.q as string;
-    const landlords = req.app.get('landlords');
-    const apts = req.app.get('apts');
-    const aptsLandlords: (LandlordWithId | ApartmentWithId)[] = [...landlords, ...apts];
+    const apts = await ApartmentsCollection.find({}).lean().exec();
 
     const options = {
       keys: ['name', 'address'],
     };
-    const fuse = new Fuse(aptsLandlords, options);
+    const fuse = new Fuse(apts, options);
     const results = fuse.search(query).slice(0, 5);
     const resultItems = results.map((result) => result.item);
 
-    const resultsWithType: (LandlordWithLabel | ApartmentWithLabel)[] = resultItems.map((result) =>
-      isLandlord(result)
-        ? ({ label: 'LANDLORD', ...result } as LandlordWithLabel)
-        : ({ label: 'APARTMENT', ...result } as ApartmentWithLabel)
+    const resultsWithType: (LandlordWithLabel | ApartmentWithLabel)[] = resultItems.map(
+      (result) => ({ label: 'APARTMENT', ...result } as ApartmentWithLabel)
     );
     res.status(200).send(JSON.stringify(resultsWithType));
   } catch (err) {
@@ -225,17 +293,80 @@ app.get('/search', async (req, res) => {
   }
 });
 
+app.get('/search-results', async (req, res) => {
+  try {
+    const query = req.query.q as string;
+    const apts = req.app.get('apts');
+    const aptsWithType: ApartmentWithId[] = apts;
+
+    const options = {
+      keys: ['name', 'address'],
+    };
+
+    const fuse = new Fuse(aptsWithType, options);
+    const results = fuse.search(query);
+    const resultItems = results.map((result) => result.item);
+
+    res.status(200).send(JSON.stringify(await pageData(resultItems)));
+  } catch (err) {
+    console.error(err);
+    res.status(400).send('Error');
+  }
+});
+
 app.get('/page-data/:page', async (req, res) => {
   const { page } = req.params;
+  // const collection =
   const collection =
     page === 'home'
-      ? await ApartmentsCollection.find().limit(3).exec()
-      : await ApartmentsCollection.find().limit(12).exec();
-  // const buildingDocs = collection as Apartment[];
-  const buildings: ApartmentWithId[] = collection.map(
-    (doc) => ({ id: doc.id, ...doc } as ApartmentWithId)
-  );
-  res.status(200).send(JSON.stringify(await pageData(buildings)));
+      ? await ApartmentsCollection.find({}).limit(3)
+      : await ApartmentsCollection.find({}).limit(12);
+
+  res.status(200).send(await pageData(collection));
+});
+
+app.post('/user', async (req, res) => {
+  try {
+    const doc = await new User(req.body).save();
+    res.send(doc);
+  } catch (e) {
+    res.status(500).send(e);
+  }
+});
+
+app.get('/user/current', async (req, res) => {
+  try {
+    res.send(req.user);
+  } catch (e) {
+    res.status(500).send(e);
+  }
+});
+
+app.get('/user/:id', async (req, res) => {
+  try {
+    const doc = await User.findById(req.params.id);
+    res.send(doc);
+  } catch (e) {
+    res.status(500).send(e);
+  }
+});
+
+app.put('/user/:id', async (req, res) => {
+  try {
+    const note = await User.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.send(note);
+  } catch (e) {
+    res.status(500).send(e);
+  }
+});
+
+app.delete('/user/:id', async (req, res) => {
+  try {
+    const result = await User.findByIdAndDelete(req.params.id);
+    res.send(result);
+  } catch (e) {
+    res.status(500).send(e);
+  }
 });
 
 // const likeHandler =

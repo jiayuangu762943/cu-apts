@@ -32,7 +32,7 @@ const landlordSchema = new Schema(
       type: Schema.Types.Mixed,
     },
   },
-  { timestamps: true }
+  { timestamps: true, toObject: { virtuals: true }, toJSON: { virtuals: true } }
 );
 
 landlordSchema.plugin(autopopulate);

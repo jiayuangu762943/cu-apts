@@ -24,6 +24,7 @@ class Database {
       },
       useNewUrlParser: true,
       useUnifiedTopology: true,
+      retryWrites: false,
       // useFindAndModify: false,
     };
 

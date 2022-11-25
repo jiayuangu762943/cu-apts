@@ -18,7 +18,7 @@ const reviewSchema = new Schema(
       type: Number,
       required: true,
     },
-    aptID: {
+    aptId: {
       type: String,
       required: true,
     },
@@ -34,7 +34,7 @@ const reviewSchema = new Schema(
         value: { type: Number },
         maintenance: { type: Number },
         communication: { type: Number },
-        conditions: { type: Number },
+        condition: { type: Number },
       },
       required: true,
     },
@@ -43,7 +43,7 @@ const reviewSchema = new Schema(
       required: true,
     },
     overallRating: {
-      type: [Number],
+      type: Number,
     },
     photos: {
       type: [String],
@@ -53,9 +53,9 @@ const reviewSchema = new Schema(
       required: true,
     },
   },
-  { timestamps: true }
+  { timestamps: true, toObject: { virtuals: true }, toJSON: { virtuals: true } }
 );
 
 reviewSchema.plugin(autopopulate);
 
-export default model<IReviewDocument>('ReviewCollection', reviewSchema);
+export default model<IReviewDocument>('ReviewsCollection', reviewSchema);

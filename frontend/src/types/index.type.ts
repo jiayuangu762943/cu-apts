@@ -1,5 +1,5 @@
 export interface IDocument {
   _id: string;
-  updatedAt: Date;
-  createdAt: Date;
+  // updatedAt: Date;
+  // createdAt: Date;
 }

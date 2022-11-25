@@ -2,6 +2,7 @@ import { Document } from 'mongoose';
 import { DetailedRating } from '../../common/types/db-types';
 
 export interface IReviewDocument extends Document {
+  readonly id: number;
   readonly aptId: string | null;
   readonly likes?: number;
   readonly date: Date;

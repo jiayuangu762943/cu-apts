@@ -17,7 +17,7 @@ import Toast from '../components/LeaveReview/Toast';
 import LinearProgress from '../components/utils/LinearProgress';
 // import { Likes, ReviewWithId } from '../../../common/types/db-types';
 import { ReviewWithId } from '../../../common/types/db-types';
-// import { getUser } from '../utils/firebase';
+import { getUser } from '../utils/firebase';
 import DropDown from '../components/utils/DropDown';
 import { useParams } from 'react-router-dom';
 import NotFoundPage from './NotFoundPage';
@@ -25,6 +25,8 @@ import HeartRating from '../components/utils/HeartRating';
 import { CardData } from '../App';
 import { getAverageRating } from '../utils/average';
 import { colors } from '../colors';
+import ReviewComponent from '../components/Review/Review';
+import { User } from '@firebase/auth-types';
 
 export type RatingInfo = {
   feature: string;
@@ -63,9 +65,8 @@ const ApartmentPage = (): ReactElement => {
   const [aptData, setAptData] = useState<ApartmentWithId[]>([]);
   const [apt, setApt] = useState<ApartmentWithId | undefined>(undefined);
   const [loaded, setLoaded] = useState(false);
-  // const [user, setUser] = useState<firebase.User | null>(null);
-  // const [showSignInError, setShowSignInError] = useState(false);
-  const [showSignInError] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [showSignInError, setShowSignInError] = useState(false);
   const [sortBy, setSortBy] = useState<Fields>('date');
   const toastTime = 3500;
   const [notFound, setNotFound] = useState(false);
@@ -96,12 +97,14 @@ const ApartmentPage = (): ReactElement => {
     });
   }, [aptId, showConfirmation]);
   useEffect(() => {
-    get<Apartment[]>(`/buildings/${apt?.landlordId}`, {
-      callback: setBuildings,
-    });
-    get<Landlord>(`/landlord/${apt?.landlordId}`, {
-      callback: setLandlordData,
-    });
+    if (apt !== undefined) {
+      get<Apartment[]>(`/buildings/${apt.landlordId}`, {
+        callback: setBuildings,
+      });
+      get<Landlord>(`/landlord/${apt.landlordId}`, {
+        callback: setLandlordData,
+      });
+    }
   }, [apt]);
 
   useEffect(() => {
@@ -123,19 +126,21 @@ const ApartmentPage = (): ReactElement => {
   }, [aptData, apt, landlordData, buildings, reviewData, aveRatingInfo, otherProperties]);
 
   useEffect(() => {
-    get<CardData[]>(`/buildings/all/${apt?.landlordId}`, {
-      callback: setOtherproperties,
-    });
+    if (apt !== undefined) {
+      get<CardData[]>(`/buildings/all/${apt.landlordId}`, {
+        callback: setOtherproperties,
+      });
+    }
   }, [apt]);
 
   const calculateAveRating = (reviews: ReviewWithId[]): RatingInfo[] => {
-    const features = ['location', 'safety', 'value', 'maintenance', 'communication', 'conditions'];
+    const features = ['location', 'safety', 'value', 'maintenance', 'communication', 'condition'];
     return features.map((feature) => {
       let key = feature as keyof DetailedRating;
-      console.log('here');
-      console.log(reviews);
       let rating =
-        reviews.reduce((sum, review) => sum + review.detailedRatings.value, 0) / reviews.length;
+        reviews === undefined
+          ? 0
+          : reviews.reduce((sum, review) => sum + review.detailedRatings[key], 0) / reviews.length;
 
       return { feature, rating };
     });
@@ -164,9 +169,9 @@ const ApartmentPage = (): ReactElement => {
     showToast(setShowConfirmation);
   };
 
-  // const showSignInErrorToast = () => {
-  //   showToast(setShowSignInError);
-  // };
+  const showSignInErrorToast = () => {
+    showToast(setShowSignInError);
+  };
 
   // const likeHelper = (dislike = false) => {
   //   return async (reviewId: string) => {
@@ -201,14 +206,14 @@ const ApartmentPage = (): ReactElement => {
   // const removeLike = likeHelper(true);
 
   const openReviewModal = async () => {
-    // if (!user) {
-    //   let user = await getUser(true);
-    //   setUser(user);
-    //   if (!user) {
-    //     showSignInErrorToast();
-    //     return;
-    //   }
-    // }
+    if (!user) {
+      let user = await getUser(true);
+      setUser(user);
+      if (!user) {
+        showSignInErrorToast();
+        return;
+      }
+    }
     setReviewOpen(true);
   };
 
@@ -221,9 +226,9 @@ const ApartmentPage = (): ReactElement => {
         landlordId={apt!.landlordId!}
         onSuccess={showConfirmationToast}
         toastTime={toastTime}
-        aptId={apt.id}
+        aptId={apt.id.toString()}
         aptName={apt.name}
-        // user={user}
+        user={user}
       />
       <PhotoCarousel
         photos={landlordData.photos}
@@ -238,8 +243,10 @@ const ApartmentPage = (): ReactElement => {
       <Grid container alignItems="center">
         <Grid container spacing={1} sm={12}>
           <Grid item>
-            <Typography variant="h6">Reviews ({reviewData.length})</Typography>
-            {reviewData.length === 0 && (
+            <Typography variant="h6">
+              Reviews ({reviewData === undefined ? 0 : reviewData.length})
+            </Typography>
+            {(reviewData === undefined || reviewData.length === 0) && (
               <Typography>No reviews available. Be the first to leave one!</Typography>
             )}
           </Grid>
@@ -259,7 +266,7 @@ const ApartmentPage = (): ReactElement => {
           )}
         </Grid>
 
-        {landlordData && landlordData.photos.length > 0 && (
+        {/* {landlordData && landlordData.photos.length > 0 && (
           <Button
             color="secondary"
             variant="contained"
@@ -268,7 +275,7 @@ const ApartmentPage = (): ReactElement => {
           >
             Show all photos
           </Button>
-        )}
+        )} */}
 
         <Grid item className={leaveReviewContainer} xs={12}>
           <Grid container spacing={1} alignItems="center" justifyContent="space-between">
@@ -323,7 +330,7 @@ const ApartmentPage = (): ReactElement => {
     <Grid item xs={12} sm={4}>
       <AptInfo
         landlord={landlordData.name}
-        contact={landlordData.contact}
+        contact={landlordData.contact === undefined ? null : landlordData.contact}
         address={apt!.address}
         buildings={otherProperties.filter((prop) => prop.buildingData.name !== apt!.name)}
       />
@@ -336,7 +343,8 @@ const ApartmentPage = (): ReactElement => {
     <LinearProgress />
   ) : (
     <>
-      {landlordData && (
+      {landlordData && console.log(landlordData.photos)}
+      {landlordData && reviewData && reviewData.length > 0 && (
         <Container>
           <ApartmentHeader
             averageRating={getAverageRating(reviewData)}
@@ -370,7 +378,9 @@ const ApartmentPage = (): ReactElement => {
             )}
             <Grid container item spacing={3}>
               {sortReviews(reviewData, sortBy).map((review, index) => (
-                <Grid item xs={12} key={index}></Grid>
+                <Grid item xs={12} key={index}>
+                  <ReviewComponent review={review} />
+                </Grid>
               ))}
             </Grid>
           </Grid>

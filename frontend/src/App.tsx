@@ -19,7 +19,7 @@ import LocationPage from './pages/LocationPage';
 import axios from 'axios';
 import { colors } from './colors';
 import SearchResultsPage from './pages/SearchResultsPage';
-
+import ChatRoomPage from './pages/ChatRoomPage';
 const theme = createTheme({
   palette: {
     primary: {
@@ -110,6 +110,7 @@ const App = (): ReactElement => {
             <Route path="/apartment/:aptId" component={ApartmentPage} />
             <Route exact path="/notfound" component={NotFoundPage} />
             <Route path="/search" component={SearchResultsPage} />
+            <Route path="/chat/:chatId/:profilePic/:userName" component={ChatRoomPage} />
           </Switch>
         </div>
         <Footer />

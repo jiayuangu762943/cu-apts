@@ -32,7 +32,7 @@ const apartmentSchema = new Schema(
       type: String,
     },
   },
-  { timestamps: true }
+  { timestamps: true, toObject: { virtuals: true }, toJSON: { virtuals: true } }
 );
 
 apartmentSchema.plugin(autopopulate);

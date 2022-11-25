@@ -1,7 +1,15 @@
 import { IDocument } from './index.type';
-import { DetailedRating } from '../../../common/types/db-types';
+// import { DetailedRating } from '../../../common/types/db-types';
+export type DetailedRating = {
+  readonly location: number;
+  readonly safety: number;
+  readonly value: number;
+  readonly maintenance: number;
+  readonly communication: number;
+  readonly condition: number;
+};
 
-export interface IReviewDocument extends Document {
+export interface IReviewDocument extends IDocument {
   readonly id: number;
   readonly aptId: string | null;
   readonly likes?: number;

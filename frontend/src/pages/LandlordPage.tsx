@@ -15,11 +15,12 @@ import Toast from '../components/LeaveReview/Toast';
 import LinearProgress from '../components/utils/LinearProgress';
 // import { Likes, ReviewWithId } from '../../../common/types/db-types';
 import { ReviewWithId } from '../../../common/types/db-types';
-// import { subscribeLikes, getUser } from '../utils/firebase';
+import { createAuthHeaders, subscribeLikes, getUser } from '../utils/firebase';
 import DropDown from '../components/utils/DropDown';
 import NotFoundPage from './NotFoundPage';
 import { CardData } from '../App';
 import { getAverageRating } from '../utils/average';
+import { User } from '@firebase/auth-types';
 
 export type RatingInfo = {
   feature: string;
@@ -37,9 +38,8 @@ const LandlordPage = (): ReactElement => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [buildings, setBuildings] = useState<CardData[]>([]);
   const [loaded, setLoaded] = useState(false);
-  // const [user, setUser] = useState<firebase.User | null>(null);
-  // const [showSignInError, setShowSignInError] = useState(false);
-  const [showSignInError] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [showSignInError, setShowSignInError] = useState(false);
   const toastTime = 4750;
   const [sortBy, setSortBy] = useState<Fields>('date');
   const [notFound, setNotFound] = useState(false);
@@ -105,9 +105,9 @@ const LandlordPage = (): ReactElement => {
     showToast(setShowConfirmation);
   };
 
-  // const showSignInErrorToast = () => {
-  //   showToast(setShowSignInError);
-  // };
+  const showSignInErrorToast = () => {
+    showToast(setShowSignInError);
+  };
 
   //   const likeHelper = (dislike = false) => {
   //     return async (reviewId: string) => {
@@ -142,14 +142,14 @@ const LandlordPage = (): ReactElement => {
   // const removeLike = likeHelper(true);
 
   const openReviewModal = async () => {
-    // if (!user) {
-    //   let user = await getUser(true);
-    //   setUser(user);
-    //   if (!user) {
-    //     showSignInErrorToast();
-    //     return;
-    //   }
-    // }
+    if (!user) {
+      let user = await getUser(true);
+      setUser(user);
+      if (!user) {
+        showSignInErrorToast();
+        return;
+      }
+    }
     setReviewOpen(true);
   };
 
@@ -164,7 +164,7 @@ const LandlordPage = (): ReactElement => {
         toastTime={toastTime}
         aptId={''}
         aptName={''}
-        // user={user}
+        user={user}
       />
       <PhotoCarousel
         photos={landlordData.photos}
@@ -237,7 +237,11 @@ const LandlordPage = (): ReactElement => {
 
   const InfoSection = landlordData && (
     <Grid item xs={12} sm={4}>
-      <InfoFeatures {...landlordData} buildings={buildings} />
+      <InfoFeatures
+        contact={landlordData.contact == null ? '' : landlordData.contact}
+        address={landlordData.address == null ? '' : landlordData.address}
+        buildings={buildings}
+      />
     </Grid>
   );
 
