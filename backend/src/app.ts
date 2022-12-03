@@ -22,6 +22,7 @@ import db from '../dbConfigs';
 import ReviewsCollection from '../models/Reviews';
 import LandlordsCollection from '../models/Landlords';
 import ApartmentsCollection from '../models/Buildings';
+import MessagesCollection from '../models/Messages';
 import event from 'events';
 const http = require('http');
 const socketIO = require('socket.io');
@@ -58,7 +59,7 @@ app.post('/send', async (req, res) => {
   await producer.connect();
   await producer.send({
     topic: 'topic-test',
-    messages: [{ value: req.body.message }],
+    messages: [{ value: `${req.body.message},${req.body.sender},${req.body.receiver}` }],
   });
   await producer.disconnect();
 
@@ -78,7 +79,15 @@ app.get('/getMsgs', async (req, res) => {
     eachMessage: async ({ topic, partition, message }: any) => {
       const prefix = `${topic}[${partition} | ${message.offset}] / ${message.timestamp}`;
       console.log(`- ${prefix} ${message.key}#${message.value}`);
-      msgs.push(message.value.toString());
+      // msgs.push(message.value.toString());
+      const msg = message.value.split(',');
+      const doc = await new MessagesCollection({
+        // ...review,
+        sender: msg[1],
+        receiver: msg[2],
+        content: msg[0],
+        // date: new Date(review.date),
+      }).save();
     },
   });
 
@@ -87,6 +96,37 @@ app.get('/getMsgs', async (req, res) => {
       messages: msgs,
     })
   );
+});
+
+app.get('/getContext/:user', async (req, res) => {
+  const { user } = req.params;
+  const receivers = await MessagesCollection.distinct('receiver', { sender: user }).exec();
+  const senders = await MessagesCollection.distinct('sender', { receiver: user }).exec();
+  var contacts = Array.from(new Set(receivers.concat(senders)));
+  res.status(201).send(
+    JSON.stringify({
+      contacts: contacts,
+    })
+  );
+  // contacts
+});
+
+app.get('/getHistory/:user1/:user2', async (req, res) => {
+  const { user1, user2 } = req.params;
+  const messageDocs = await ReviewsCollection.find({
+    sender: {
+      // $elemMatch: {
+      $in: [user1, user2],
+      // },
+    },
+    receiver: {
+      // $elemMatch: {
+      $in: [user1, user2],
+      // },
+    },
+  })
+    .sort({ createdAt: -1 })
+    .exec();
 });
 
 app.post('/new-review', authenticate, async (req, res) => {
