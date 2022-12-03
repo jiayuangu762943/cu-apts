@@ -6,7 +6,7 @@ import { CardData } from '../../App';
 import { Link as RouterLink } from 'react-router-dom';
 import { colors } from '../../colors';
 import HeartRating from '../utils/HeartRating';
-import { ReviewWithId, ApartmentWithId } from '../../../../common/types/db-types';
+import { ReviewWithId, ApartmentWithId } from '../../../common/types/db-types';
 import { getAverageRating } from '../../utils/average';
 
 type Props = {

@@ -1,4 +1,4 @@
-import { ReviewWithId } from '../../../common/types/db-types';
+import { ReviewWithId } from '../../common/types/db-types';
 
 const getAverageRating = (reviewData: ReviewWithId[]) =>
   reviewData.reduce(

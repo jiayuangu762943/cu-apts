@@ -7,16 +7,11 @@ import { useTitle } from '../utils';
 import ApartmentHeader from '../components/Apartment/Header';
 import AptInfo from '../components/Apartment/AptInfo';
 import { get } from '../utils/call';
-import {
-  Landlord,
-  Apartment,
-  ApartmentWithId,
-  DetailedRating,
-} from '../../../common/types/db-types';
+import { Landlord, Apartment, ApartmentWithId, DetailedRating } from '../../common/types/db-types';
 import Toast from '../components/LeaveReview/Toast';
 import LinearProgress from '../components/utils/LinearProgress';
 // import { Likes, ReviewWithId } from '../../../common/types/db-types';
-import { ReviewWithId } from '../../../common/types/db-types';
+import { ReviewWithId } from '../../common/types/db-types';
 import { getUser } from '../utils/firebase';
 import DropDown from '../components/utils/DropDown';
 import { useParams } from 'react-router-dom';

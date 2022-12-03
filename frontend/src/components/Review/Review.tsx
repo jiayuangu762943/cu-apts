@@ -17,7 +17,7 @@ import { makeStyles } from '@material-ui/styles';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import clsx from 'clsx';
 import DetailedRatings from './DetailedRating';
-import { ReviewWithId } from '../../../../common/types/db-types';
+import { ReviewWithId } from '../../../common/types/db-types';
 import { colors } from '../../colors';
 
 type Props = {

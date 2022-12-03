@@ -12,7 +12,7 @@ import {
 } from '@material-ui/core';
 import axios from 'axios';
 import React, { Dispatch, SetStateAction, useReducer, useState } from 'react';
-import { DetailedRating, Review } from '../../../../common/types/db-types';
+import { DetailedRating, Review } from '../../../common/types/db-types';
 import { splitArr } from '../../utils';
 import { createAuthHeaders, uploadFile } from '../../utils/firebase';
 import ReviewRating from './ReviewRating';

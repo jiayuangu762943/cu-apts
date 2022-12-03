@@ -1,5 +1,5 @@
 import { Document } from 'mongoose';
-import { DetailedRating } from '../../common/types/db-types';
+import { DetailedRating } from '../../frontend/common/types/db-types';
 
 export interface IReviewDocument extends Document {
   readonly id: number;

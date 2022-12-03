@@ -6,7 +6,7 @@ import styles from './ChatRoomPage.module.scss';
 import { CardData, LocationCardData } from '../App';
 import { colors } from '../colors';
 import ChatHeader from '../components/Chat/ChatHeader';
-import { Message } from '../../../common/types/db-types';
+import { Message } from '../../common/types/db-types';
 import ChatMessages from '../components/Chat/ChatMessages';
 import ChatInput from '../components/Chat/ChatInput';
 import LinearProgress from '../components/utils/LinearProgress';

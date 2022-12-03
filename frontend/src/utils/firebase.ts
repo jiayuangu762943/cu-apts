@@ -1,7 +1,7 @@
 import firebase from 'firebase';
 import { config } from 'dotenv';
 import { AxiosRequestConfig } from 'axios';
-import { Likes } from '../../../common/types/db-types';
+import { Likes } from '../../common/types/db-types';
 // import { v4 as uuid } from 'uuid';
 import { BlobServiceClient, BlockBlobClient, ContainerClient } from '@azure/storage-blob';
 

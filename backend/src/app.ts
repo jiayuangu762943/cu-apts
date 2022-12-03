@@ -15,34 +15,18 @@ import {
   LandlordWithLabel,
   ApartmentWithLabel,
   ApartmentWithId,
-} from '@common/types/db-types';
+} from '../common/types/db-types';
 import path from 'path';
 import db from '../dbConfigs';
-import kafka from 'kafka-node';
 
 import ReviewsCollection from '../models/Reviews';
 import LandlordsCollection from '../models/Landlords';
 import ApartmentsCollection from '../models/Buildings';
-import socketIO from 'socket.io';
 import event from 'events';
+const http = require('http');
+const socketIO = require('socket.io');
 
 const app: Express = express();
-
-const server = http.createServer(app);
-const io = socketIO(server);
-const producer = new kafka.Producer(new kafka.KafkaClient());
-const consumer = new kafka.Consumer(new kafka.KafkaClient(), [{ topic: 'emptytopic', offset: 0 }], {
-  groupId: 'kaanbayram',
-  autoCommit: false,
-});
-
-producer.on('ready', function () {
-  console.log('Producer is ready');
-});
-producer.on('error', function (err: Error) {
-  console.log('Producer is in error state');
-  console.log(err);
-});
 
 dotenv.config();
 app.use(express.json());
@@ -53,89 +37,56 @@ app.use(express.static(__dirname)); //here is important thing - no static direct
 
 db.dbConnection();
 
-app.post('/send', (req, res) => {
-  const sentMessage = JSON.stringify(req.body.message);
-  const payloads = [{ topic: req.body.topic, messages: sentMessage, partition: 0 }];
-  producer.send(payloads, function (err: Error, data: any) {
-    res.json(data);
-  });
+const { Kafka, logLevel } = require('kafkajs');
+const ip = require('ip');
+const host = process.env.HOST_IP || ip.address();
+
+const kafka = new Kafka({
+  logLevel: logLevel.DEBUG,
+  brokers: [`${host}:9092`],
+  clientId: 'example-producer',
+});
+const kafka_consumer = new Kafka({
+  logLevel: logLevel.INFO,
+  brokers: [`${host}:9092`],
+  clientId: 'example-consumer',
 });
 
-const kontrol = false;
-app.post('/changetopic', function (req, res) {
-  consumer.addTopics([req.body.topic], (err: Error, added: string[]) => {
-    console.log(added + ' eklendi.');
+app.post('/send', async (req, res) => {
+  const producer = kafka.producer();
+  const msg = 'Hello KafkaJS user!';
+  await producer.connect();
+  await producer.send({
+    topic: 'topic-test',
+    messages: [{ value: req.body.message }],
   });
-  consumer.resume();
-  // console.log(consumer.payloads[0]);
-  // global.kontrol = true;
+  await producer.disconnect();
+
+  res.status(201).send(
+    JSON.stringify({
+      messages: req.body.message,
+    })
+  );
 });
-const eventEmitter2 = new event.EventEmitter();
-eventEmitter2.setMaxListeners(150);
+let msgs: string[] = [];
 
-app.post('/createtopic', function (req, res) {
-  var client = new kafka.KafkaClient();
-
-  console.log(req.body.createtopic);
-  var topicsToCreate = [
-    {
-      topic: req.body.createtopic,
-      partitions: 1,
-      replicationFactor: 1,
+app.get('/getMsgs', async (req, res) => {
+  const consumer = kafka_consumer.consumer({ groupId: 'test-group' });
+  await consumer.connect();
+  await consumer.subscribe({ topic: 'topic-test', fromBeginning: true });
+  await consumer.run({
+    eachMessage: async ({ topic, partition, message }: any) => {
+      const prefix = `${topic}[${partition} | ${message.offset}] / ${message.timestamp}`;
+      console.log(`- ${prefix} ${message.key}#${message.value}`);
+      msgs.push(message.value.toString());
     },
-  ];
-  client.createTopics(topicsToCreate, (error, result) => {
-    console.log(result);
   });
-});
 
-const eventEmitter3 = new event.EventEmitter();
-eventEmitter3.setMaxListeners(150);
-
-const eventEmitter = new event.EventEmitter();
-eventEmitter.setMaxListeners(150);
-
-const consumer2 = new kafka.Consumer(
-  new kafka.KafkaClient(),
-  [{ topic: 'emptytopic', offset: 0 }],
-  {
-    groupId: 'kaanbayram',
-    autoCommit: false,
-  }
-);
-
-const dataarray = [];
-consumer.on('message', function (message) {
-  if (kontrol === true) {
-    count = global.dataarray.length;
-    while (count > 0) {
-      global.dataarray.pop();
-      count = count - 1;
-    }
-    global.kontrol = false;
-  }
-
-  console.log(message.value);
-  dataarray.push(message.value);
-  eventEmitter.emit('trigger');
-});
-
-io.on('connection', (socket) => {
-  console.log('User connected');
-  io.sockets.emit('getmessage', { data: dataarray });
-
-  eventEmitter.on('trigger', () => {
-    io.sockets.emit('getmessage', { data: dataarray });
-  });
-});
-
-io.on('connection', (socket) => {
-  console.log('user connected socket2');
-  io.sockets.emit('sendlist', { data: listtopic });
-
-  eventEmitter3.on('trigsend', () => {
-    io.sockets.emit('sendlist', { data: listtopic });
-  });
+  res.status(201).send(
+    JSON.stringify({
+      messages: msgs,
+    })
+  );
 });
 
 app.post('/new-review', authenticate, async (req, res) => {

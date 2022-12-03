@@ -17,7 +17,7 @@ const apartmentSchema = new Schema(
       required: true,
     },
     landlordId: {
-      type: String,
+      type: Number,
     },
     numBaths: {
       type: Number,
