@@ -7,6 +7,7 @@ import ChatContacts from '../components/Chat/ChatContacts';
 import ChatInput from '../components/Chat/ChatInput';
 import LinearProgress from '../components/utils/LinearProgress';
 import { getUser } from '../utils/firebase';
+import Toast from '../components/LeaveReview/Toast';
 
 type Contact = {
   name: string;
@@ -29,20 +30,20 @@ const ChatRoomPage = (): ReactElement => {
   const [selected, setSelected] = useState<number>(-1);
   const [messages, setMessages] = useState<Message[]>([]);
 
-  const showToast = (setState: (value: React.SetStateAction<boolean>) => void) => {
-    setState(true);
-    setTimeout(() => {
-      setState(false);
-    }, toastTime);
-  };
-  const [_, setShowSignInError] = useState(false);
-  const showSignInErrorToast = () => {
-    showToast(setShowSignInError);
-  };
+  const [showSignInError, setShowSignInError] = useState(false);
 
   let senderName = user?.displayName == null ? '' : user?.displayName;
   let senderNameNoSpace = senderName.split(' ').join('_');
   useEffect(() => {
+    const showToast = (setState: (value: React.SetStateAction<boolean>) => void) => {
+      setState(true);
+      setTimeout(() => {
+        setState(false);
+      }, toastTime);
+    };
+    const showSignInErrorToast = () => {
+      showToast(setShowSignInError);
+    };
     (async () => {
       if (!user) {
         let user = await getUser(true);
@@ -53,10 +54,10 @@ const ChatRoomPage = (): ReactElement => {
         }
       }
     })();
-  }, []);
+  }, [user]);
 
   useEffect(() => {
-    if (senderNameNoSpace != '') {
+    if (senderNameNoSpace !== '') {
       get<Contact[]>(`/getContacts/${senderNameNoSpace}`, {
         callback: setContacts,
       });
@@ -66,13 +67,10 @@ const ChatRoomPage = (): ReactElement => {
     //   callback: setContacts,
     // });
     // setLoading(false);
-  }, [senderName]);
+  }, [senderNameNoSpace]);
 
   // const receiverName = selected === -1 ? '' : contacts[selected].name;
-  const receiverName = selected === -1 ? '' : String(contacts[selected]);
-  console.log(senderName);
-  // console.log(contacts);
-  // console.log(selected);
+  let receiverName = selected === -1 ? '' : String(contacts[selected]);
 
   // const receiverNameNoSpace = receiverName.split(' ').join('_');
   useEffect(() => {
@@ -82,11 +80,19 @@ const ChatRoomPage = (): ReactElement => {
         callback: setMessages,
       });
     }
-  }, [selected]);
+  }, [receiverName, senderNameNoSpace]);
 
   // console.log(user?.displayName);
   return (
     <section className={styles.chatBox}>
+      {showSignInError && (
+        <Toast
+          isOpen={showSignInError}
+          severity="error"
+          message="Error: Please sign in with a Cornell email."
+          time={toastTime}
+        />
+      )}
       <div className={styles.chatLeft}>
         {loading ? (
           <LinearProgress />

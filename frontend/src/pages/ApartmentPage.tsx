@@ -218,7 +218,7 @@ const ApartmentPage = (): ReactElement => {
         open={reviewOpen}
         onClose={() => setReviewOpen(false)}
         setOpen={setReviewOpen}
-        landlordId={apt!.landlordId!}
+        landlordId={String(apt!.landlordId!)}
         onSuccess={showConfirmationToast}
         toastTime={toastTime}
         aptId={apt.id.toString()}

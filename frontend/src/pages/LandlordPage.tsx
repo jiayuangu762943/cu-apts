@@ -15,12 +15,12 @@ import Toast from '../components/LeaveReview/Toast';
 import LinearProgress from '../components/utils/LinearProgress';
 // import { Likes, ReviewWithId } from '../../../common/types/db-types';
 import { ReviewWithId } from '../../common/types/db-types';
-import { getUser } from '../utils/firebase';
 import DropDown from '../components/utils/DropDown';
 import NotFoundPage from './NotFoundPage';
 import { CardData } from '../App';
 import { getAverageRating } from '../utils/average';
 import { User } from '@firebase/auth-types';
+import { getUser } from '../utils/firebase';
 
 export type RatingInfo = {
   feature: string;
@@ -109,37 +109,28 @@ const LandlordPage = (): ReactElement => {
     showToast(setShowSignInError);
   };
 
-  //   const likeHelper = (dislike = false) => {
-  //     return async (reviewId: string) => {
-  //       setLikeStatuses((reviews) => ({ ...reviews, [reviewId]: true }));
-  //       try {
-  //         const user = await getUser(true);
-  //         if (!user) {
-  //           throw new Error('Failed to login');
-  //         }
-  //         const defaultLikes = dislike ? 1 : 0;
-  //         const offsetLikes = dislike ? -1 : 1;
-  //         const token = await user.getIdToken(true);
-  //         const endpoint = dislike ? '/remove-like' : '/add-like';
-  //         await axios.post(endpoint, { reviewId }, createAuthHeaders(token));
-  //         setLikedReviews((reviews) => ({ ...reviews, [reviewId]: !dislike }));
-  //         setReviewData((reviews) =>
-  //           reviews.map((review) =>
-  //             review.id === reviewId
-  //               ? { ...review, likes: (review.likes || defaultLikes) + offsetLikes }
-  //               : review
-  //           )
-  //         );
-  //       } catch (err) {
-  //         throw new Error('Error with liking review');
-  //       }
-  //       setLikeStatuses((reviews) => ({ ...reviews, [reviewId]: false }));
-  //     };
-  //   };
+  useEffect(() => {
+    const showToast = (setState: (value: React.SetStateAction<boolean>) => void) => {
+      setState(true);
+      setTimeout(() => {
+        setState(false);
+      }, toastTime);
+    };
+    const showSignInErrorToast = () => {
+      showToast(setShowSignInError);
+    };
 
-  // const addLike = likeHelper(false);
-
-  // const removeLike = likeHelper(true);
+    (async () => {
+      if (!user) {
+        let user = await getUser(true);
+        setUser(user);
+        if (!user) {
+          showSignInErrorToast();
+          return;
+        }
+      }
+    })();
+  }, [user]);
 
   const openReviewModal = async () => {
     if (!user) {
@@ -245,6 +236,8 @@ const LandlordPage = (): ReactElement => {
         contact={landlordData.contact == null ? '' : landlordData.contact}
         address={landlordData.address == null ? '' : landlordData.address}
         buildings={buildings}
+        landlordName={landlordData.name}
+        userName={user?.displayName == null ? '' : user.displayName}
       />
     </Grid>
   );
@@ -255,6 +248,14 @@ const LandlordPage = (): ReactElement => {
     <LinearProgress />
   ) : (
     <>
+      {showSignInError && (
+        <Toast
+          isOpen={showSignInError}
+          severity="error"
+          message="Error: Please sign in with a Cornell email."
+          time={toastTime}
+        />
+      )}
       {landlordData && (
         <Container>
           <LandlordHeader

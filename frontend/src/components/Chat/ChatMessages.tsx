@@ -41,14 +41,13 @@ Props) => {
         // your code here
       });
     });
-  }, []);
-  useEffect(() => {
-    setMessages([...messages, ...add]);
   }, [add]);
-  console.log(messages);
-  const formated_msgs = messages.map((m: Message, i: number) =>
+  // useEffect(() => {
+  //   setMessages([...messages, ...add]);
+  // }, [add]);
+  const formated_msgs = messages.concat(add).map((m: Message, i: number) =>
     // console.log(m.sender == senderName.split(' ').join('_')),
-    m.sender == senderName.split(' ').join('_') || m.sender == senderName ? (
+    m.sender === senderName.split(' ').join('_') || m.sender === senderName ? (
       <div key={i}>
         <ChatReceive message={m.message} name={senderName} profilePic={senderProfilePic} />
       </div>

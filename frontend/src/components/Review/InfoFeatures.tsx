@@ -8,13 +8,21 @@ type Props = {
   readonly buildings: CardData[];
   readonly contact: string | null;
   readonly address: string | null;
+  readonly landlordName: string;
+  readonly userName: string;
 };
 
-export default function InfoFeatures({ buildings, contact, address }: Props): ReactElement {
+export default function InfoFeatures({
+  buildings,
+  contact,
+  address,
+  landlordName,
+  userName,
+}: Props): ReactElement {
   return (
     <Card variant="outlined">
       <CardContent>
-        <Info contact={contact} address={address} />
+        <Info contact={contact} address={address} landlordName={landlordName} userName={userName} />
         {/* <Divider /> */}
         <PropertyInfo title="Properties Owned" info={buildings} />
       </CardContent>

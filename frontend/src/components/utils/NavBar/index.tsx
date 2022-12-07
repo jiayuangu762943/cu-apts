@@ -186,7 +186,7 @@ const NavBar = ({ headersData }: Props): ReactElement => {
           <Grid item>
             <Typography className={logo}>
               <Link color="textPrimary" underline="none" href="/">
-                CUAPTS
+                ITHACAPTS
               </Link>
             </Typography>
           </Grid>

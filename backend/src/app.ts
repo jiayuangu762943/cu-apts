@@ -119,11 +119,12 @@ app.post('/send', async (req, res) => {
 app.post('/newContact/:senderName/:receiverName', async (req, res) => {
   const { senderName, receiverName } = req.params;
   const doc = await new MessagesCollection({
-    content: '-',
+    content: 'Hi',
     sender: senderName,
     receiver: receiverName,
   }).save();
-  res.sendStatus(201).send(doc.id);
+  console.log(receiverName);
+  res.status(201).send(doc.id);
 });
 
 app.get('/getContacts/:user', async (req, res) => {
@@ -185,6 +186,18 @@ app.post('/new-review', authenticate, async (req, res) => {
     console.error(err);
     res.status(401).send('Error');
   }
+});
+
+app.get('/location/:loc', async (req, res) => {
+  const { loc } = req.params;
+  const buildingDocs = await ApartmentsCollection.find({ area: loc.toUpperCase() })
+    .limit(10)
+    .exec();
+
+  // const buildings: ApartmentWithId[] = buildingDocs.map(
+  //   (doc) => ({ id: doc.id, ...doc } as ApartmentWithId)
+  // );
+  res.status(200).send(JSON.stringify(await pageData(buildingDocs)));
 });
 
 app.get('/review/:idType/:id', async (req, res) => {
