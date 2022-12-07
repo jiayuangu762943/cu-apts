@@ -1,16 +1,7 @@
-import React, { ReactElement, useState, useEffect } from 'react';
-import {
-  Box,
-  Container,
-  Typography,
-  makeStyles,
-  TextField,
-  Input,
-  Button,
-} from '@material-ui/core';
+import React, { useState } from 'react';
+import { TextField, Button } from '@material-ui/core';
 // import { colors } from '../colors';
 import axios from 'axios';
-import { setTextRange } from 'typescript';
 
 type Props = {
   senderName: string;

@@ -1,15 +1,18 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Avatar } from '@material-ui/core';
 type Props = {
   message: string;
   profilePic: string;
+  name: string;
 };
-const ChatReceive = ({ message, profilePic }: Props) => {
+const ChatReceive = ({ message, name, profilePic }: Props) => {
   return (
     <>
-      <div className="chat-receive-text">
-        <Avatar src={profilePic} />
-        <div className="chat-bubble-container ">
+      <div className="chat-box">
+        <div className="chat-left">
+          <Avatar src={profilePic} /> {name}
+        </div>
+        <div className="chat-right ">
           <div className="chat-bubble sm">{message}</div>
         </div>
       </div>

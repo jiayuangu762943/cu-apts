@@ -1,7 +1,7 @@
 import React, { ReactElement } from 'react';
 import Info from './Info';
 import PropertyInfo from './PropertyInfo';
-import { Card, CardContent, Divider } from '@material-ui/core';
+import { Card, CardContent } from '@material-ui/core';
 import { CardData } from '../../App';
 
 type Props = {

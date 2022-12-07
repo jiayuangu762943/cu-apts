@@ -15,7 +15,7 @@ import Toast from '../components/LeaveReview/Toast';
 import LinearProgress from '../components/utils/LinearProgress';
 // import { Likes, ReviewWithId } from '../../../common/types/db-types';
 import { ReviewWithId } from '../../common/types/db-types';
-import { createAuthHeaders, subscribeLikes, getUser } from '../utils/firebase';
+import { getUser } from '../utils/firebase';
 import DropDown from '../components/utils/DropDown';
 import NotFoundPage from './NotFoundPage';
 import { CardData } from '../App';

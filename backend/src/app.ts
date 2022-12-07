@@ -23,14 +23,11 @@ import ReviewsCollection from '../models/Reviews';
 import LandlordsCollection from '../models/Landlords';
 import ApartmentsCollection from '../models/Buildings';
 import MessagesCollection from '../models/Messages';
-import event from 'events';
-import producer from './producer';
-import consumerStream from './consumer';
 const http = require('http');
 // const io = require('socket.io');
 import chatClient from './client';
 import { CommunicationIdentityClient } from '@azure/communication-identity';
-import { ChatThreadClient } from '@azure/communication-chat';
+// import { ChatThreadClient } from '@azure/communication-chat';
 const app: Express = express();
 
 dotenv.config();
@@ -118,8 +115,6 @@ app.post('/send', async (req, res) => {
     })
   );
 });
-
-let msgs: string[] = [];
 
 app.post('/newContact/:senderName/:receiverName', async (req, res) => {
   const { senderName, receiverName } = req.params;

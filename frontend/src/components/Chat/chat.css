@@ -10,7 +10,17 @@
   align-items: center;
   transition: all 0.5s;
 }
-
+.chat-box {
+  display: flex;
+  flex-direction: row;
+}
+.chat-left {
+  width: 30%;
+}
+.chat-right {
+  padding-left: 5%;
+  width: 65%;
+}
 .chat-preview-container:hover {
   background-color: #f5f5f5;
 }

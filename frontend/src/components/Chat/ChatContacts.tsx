@@ -1,16 +1,5 @@
-import React, { ReactElement, useState, useEffect } from 'react';
-import {
-  Box,
-  List,
-  Avatar,
-  ListItem,
-  ListItemText,
-  Container,
-  Typography,
-  makeStyles,
-  TextField,
-} from '@material-ui/core';
-import axios from 'axios';
+import React from 'react';
+import { Avatar, ListItem } from '@material-ui/core';
 
 // import { get } from '../utils/call';
 // import { colors } from '../colors';
@@ -31,11 +20,13 @@ const ChatContacts = ({ setSelected, contacts }: Props) => {
   const handleClick = (index: number) => {
     setSelected(index);
   };
-  console.log('chatContacts');
+  // console.log('chatContacts');
   console.log(contacts);
   return (
     <>
       {contacts.map((contact: Contact, index: number) => {
+        // console.log(contact);
+        // contact.name = String(contact);
         return (
           <ListItem
             // ${index === selected ? 'active' : ''
@@ -43,7 +34,8 @@ const ChatContacts = ({ setSelected, contacts }: Props) => {
             onClick={() => handleClick(index)}
           >
             <Avatar className="chat-preview-pic" src={contact.profilePic} />
-            <div className="chat-preview">{contact.name}</div>
+            {/* <div className="chat-preview">{contact.name}</div> */}
+            <div className="chat-preview">{String(contact)}</div>
           </ListItem>
         );
       })}

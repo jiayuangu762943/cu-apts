@@ -1,14 +1,6 @@
 import React, { ReactElement } from 'react';
 import HeartRating from '../utils/HeartRating';
-import {
-  CardHeader,
-  CardMedia,
-  Grid,
-  Button,
-  withStyles,
-  makeStyles,
-  Avatar,
-} from '@material-ui/core';
+import { CardHeader, CardMedia, Grid, withStyles, makeStyles, Avatar } from '@material-ui/core';
 import styles from './Header.module.scss';
 import { Landlord } from '../../../common/types/db-types';
 import defaultHeader from '../../assets/default_header.png';
@@ -126,20 +118,19 @@ const LandlordHeader = ({
   handleClick,
   averageRating,
 }: Props): ReactElement => {
-  const { name, profilePhoto, photos } = landlord;
+  const { name, profilePhoto } = landlord;
   const icon = profilePhoto ? profilePhoto : defaultIcon;
   // const photoLink = photos.length ? photos[0] : defaultHeader;
   const photoLink = defaultHeader;
   const {
     media,
     logo,
-    photoButton,
     landlordName,
     landlordReviews,
     landlordRating,
     headerSection,
     ratingSection,
-    btnSection,
+
     logoGrid,
   } = useStyles();
   return (

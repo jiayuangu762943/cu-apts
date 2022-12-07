@@ -3,7 +3,7 @@ import { config } from 'dotenv';
 import { AxiosRequestConfig } from 'axios';
 import { Likes } from '../../common/types/db-types';
 // import { v4 as uuid } from 'uuid';
-import { BlobServiceClient, BlockBlobClient, ContainerClient } from '@azure/storage-blob';
+import { BlobServiceClient, ContainerClient } from '@azure/storage-blob';
 
 config();
 const sasToken =
@@ -77,18 +77,18 @@ const createBlobInContainer = async (containerClient: ContainerClient, file: Fil
   return blobClient.url;
 };
 // return list of blobs in container to display
-const getBlobsInContainer = async (containerClient: ContainerClient) => {
-  const returnedBlobUrls: string[] = [];
+// const getBlobsInContainer = async (containerClient: ContainerClient) => {
+//   const returnedBlobUrls: string[] = [];
 
-  // get list of blobs in container
-  for await (const blob of containerClient.listBlobsFlat()) {
-    returnedBlobUrls.push(
-      `https://${storageAccountName}.blob.core.windows.net/${containerName}/${blob.name}`
-    );
-  }
+//   // get list of blobs in container
+//   for await (const blob of containerClient.listBlobsFlat()) {
+//     returnedBlobUrls.push(
+//       `https://${storageAccountName}.blob.core.windows.net/${containerName}/${blob.name}`
+//     );
+//   }
 
-  return returnedBlobUrls;
-};
+//   return returnedBlobUrls;
+// };
 
 const uploadFile = async (file: File) => {
   // const storageRef = storage.ref();

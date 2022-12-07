@@ -15,10 +15,10 @@ RUN mkdir -p /app/frontend
 WORKDIR /app/frontend
 
 COPY /package*.json .
-
+RUN yarn add firebase
 RUN yarn install
 
-COPY . .
+COPY ./ ./
 
 RUN yarn build
 

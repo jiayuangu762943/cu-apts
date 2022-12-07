@@ -1,5 +1,5 @@
-import React, { ReactElement, useState, useEffect } from 'react';
-import { Box, Avatar, Container, Typography, makeStyles } from '@material-ui/core';
+import React from 'react';
+import { Avatar, makeStyles } from '@material-ui/core';
 // import { get } from '../utils/call';
 // import { colors } from '../colors';
 
@@ -17,10 +17,10 @@ const useStyles = makeStyles(() => ({
 const ChatHeader = ({ receiverProfilePic, receiverName }: Props) => {
   const { title } = useStyles();
   return (
-    <div className="chat-messages-container">
+    <div className="chat-preview-container">
       <div className="chat-header">
-        <Avatar src={receiverProfilePic} />
-        <div className="xs">{receiverName}</div>
+        <Avatar className="chat-preview-pic" src={receiverProfilePic} />
+        <div className="chat-preview">{receiverName}</div>
       </div>
     </div>
   );
