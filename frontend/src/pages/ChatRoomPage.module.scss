@@ -1,0 +1,27 @@
+#chat.active-chat .chat-list {
+  animation: rightToLeft 1s;
+  animation-fill-mode: forwards;
+}
+
+#chat.active-chat .chat-messages-container {
+  animation: rightToLeft2 1s ease-in;
+  animation-fill-mode: forwards;
+}
+
+.chatBox {
+  display: flex;
+  flex-direction: row;
+}
+.chatLeft {
+  width: 20%;
+}
+.active-chat{
+  width: 20%;
+  animation: rightToLeft 1s;
+  animation-fill-mode: forwards;
+}
+
+.chatRight {
+  padding-left: 10%;
+  width: 70%;
+}

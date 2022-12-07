@@ -24,9 +24,13 @@ import LandlordsCollection from '../models/Landlords';
 import ApartmentsCollection from '../models/Buildings';
 import MessagesCollection from '../models/Messages';
 import event from 'events';
+import producer from './producer';
+import consumerStream from './consumer';
 const http = require('http');
-const socketIO = require('socket.io');
-
+// const io = require('socket.io');
+import chatClient from './client';
+import { CommunicationIdentityClient } from '@azure/communication-identity';
+import { ChatThreadClient } from '@azure/communication-chat';
 const app: Express = express();
 
 dotenv.config();
@@ -39,81 +43,107 @@ app.use(express.static(__dirname)); //here is important thing - no static direct
 db.dbConnection();
 
 const { Kafka, logLevel } = require('kafkajs');
-const ip = require('ip');
-const host = process.env.HOST_IP || ip.address();
-
-const kafka = new Kafka({
-  logLevel: logLevel.DEBUG,
-  brokers: [`${host}:9092`],
-  clientId: 'example-producer',
-});
-const kafka_consumer = new Kafka({
-  logLevel: logLevel.INFO,
-  brokers: [`${host}:9092`],
-  clientId: 'example-consumer',
-});
+type Message = {
+  message: string;
+  sender: string;
+  receiver: string;
+};
+// var Kafka = require('node-rdkafka');
+// const ip = require('ip');
+// const host = process.env.HOST_IP || ip.address();
+// const topic = 'message';
+// const httpServer = require('http').createServer();
+// producer.connect();
+const connectionString =
+  'endpoint=https://azure-chat-app.communication.azure.com/;accesskey=cZs5v6Y9QXw2obA+QrZHICiodb/LGLADqoyEihRBlSDkMB79mEF6cxFojlMNIMEQVD8BSm2iFFpTPoC68DJk7Q==';
+// Instantiate the identity client
+const identityClient = new CommunicationIdentityClient(
+  connectionString == null ? '' : connectionString
+);
 
 app.post('/send', async (req, res) => {
-  const producer = kafka.producer();
-  const msg = 'Hello KafkaJS user!';
-  await producer.connect();
-  await producer.send({
-    topic: 'topic-test',
-    messages: [{ value: `${req.body.message},${req.body.sender},${req.body.receiver}` }],
-  });
-  await producer.disconnect();
-
+  let userChatThreadClient = app.get(`${req.body.sender}&${req.body.receiver}`);
+  if (userChatThreadClient == null) {
+    let senderIdentityResponse = await identityClient.createUser();
+    const senderCommId = senderIdentityResponse.communicationUserId;
+    let receiverIdentityResponse = await identityClient.createUser();
+    const receiverCommId = receiverIdentityResponse.communicationUserId;
+    const createChatThreadRequest = {
+      topic: `${req.body.sender},${req.body.receiver}`,
+    };
+    const createChatThreadOptions = {
+      participants: [
+        {
+          id: { communicationUserId: senderCommId },
+          displayName: req.body.sender,
+        },
+        {
+          id: { communicationUserId: receiverCommId },
+          displayName: req.body.receiver,
+        },
+      ],
+    };
+    const createChatThreadResult = await chatClient.createChatThread(
+      createChatThreadRequest,
+      createChatThreadOptions
+    );
+    const threadId = createChatThreadResult.chatThread!.id;
+    let chatThreadClient = chatClient.getChatThreadClient(threadId);
+    app.set(`${req.body.sender}&${req.body.receiver}`, chatThreadClient);
+    userChatThreadClient = chatThreadClient;
+  }
+  const sendMessageRequest = {
+    content: `${req.body.message},${req.body.sender},${req.body.receiver}`,
+  };
+  let sendMessageOptions = {
+    senderDisplayName: req.body.sender,
+    type: 'text',
+  };
+  const sendChatMessageResult = await userChatThreadClient.sendMessage(
+    sendMessageRequest,
+    sendMessageOptions
+  );
+  const messageId = sendChatMessageResult.id;
+  console.log(`Message sent!, message id:${messageId}`);
+  const doc = await new MessagesCollection({
+    content: req.body.message,
+    sender: req.body.sender.split(' ').join('_'),
+    receiver: req.body.receiver.split(' ').join('_'),
+    date: new Date(),
+  }).save();
+  console.log(`msg save to db`);
   res.status(201).send(
     JSON.stringify({
-      messages: req.body.message,
+      docId: doc.id,
     })
   );
 });
+
 let msgs: string[] = [];
 
-app.get('/getMsgs', async (req, res) => {
-  const consumer = kafka_consumer.consumer({ groupId: 'test-group' });
-  await consumer.connect();
-  await consumer.subscribe({ topic: 'topic-test', fromBeginning: true });
-  await consumer.run({
-    eachMessage: async ({ topic, partition, message }: any) => {
-      const prefix = `${topic}[${partition} | ${message.offset}] / ${message.timestamp}`;
-      console.log(`- ${prefix} ${message.key}#${message.value}`);
-      // msgs.push(message.value.toString());
-      const msg = message.value.split(',');
-      const doc = await new MessagesCollection({
-        // ...review,
-        sender: msg[1],
-        receiver: msg[2],
-        content: msg[0],
-        // date: new Date(review.date),
-      }).save();
-    },
-  });
-
-  res.status(201).send(
-    JSON.stringify({
-      messages: msgs,
-    })
-  );
+app.post('/newContact/:senderName/:receiverName', async (req, res) => {
+  const { senderName, receiverName } = req.params;
+  const doc = await new MessagesCollection({
+    content: '-',
+    sender: senderName,
+    receiver: receiverName,
+  }).save();
+  res.sendStatus(201).send(doc.id);
 });
 
-app.get('/getContext/:user', async (req, res) => {
+app.get('/getContacts/:user', async (req, res) => {
   const { user } = req.params;
+
   const receivers = await MessagesCollection.distinct('receiver', { sender: user }).exec();
   const senders = await MessagesCollection.distinct('sender', { receiver: user }).exec();
   var contacts = Array.from(new Set(receivers.concat(senders)));
-  res.status(201).send(
-    JSON.stringify({
-      contacts: contacts,
-    })
-  );
-  // contacts
+  res.status(201).send(JSON.stringify(contacts));
+  // new real-time random contact
 });
 
-app.get('/getHistory/:user1/:user2', async (req, res) => {
+app.get('/getMsgs/:user1/:user2', async (req, res) => {
   const { user1, user2 } = req.params;
-  const messageDocs = await ReviewsCollection.find({
+  const messageDocs = await MessagesCollection.find({
     sender: {
       // $elemMatch: {
       $in: [user1, user2],
@@ -124,9 +154,20 @@ app.get('/getHistory/:user1/:user2', async (req, res) => {
       $in: [user1, user2],
       // },
     },
-  })
-    .sort({ createdAt: -1 })
-    .exec();
+  }).exec();
+  // .sort({ date: 1 })
+
+  const cleanedNullMsgObjs = messageDocs.map((msg) => {
+    if (msg.content !== '-') {
+      const obj = {
+        message: msg.content,
+        sender: msg.sender,
+        receiver: msg.receiver,
+      };
+      return obj;
+    }
+  });
+  res.status(201).send(cleanedNullMsgObjs);
 });
 
 app.post('/new-review', authenticate, async (req, res) => {
@@ -184,7 +225,7 @@ app.get('/landlord/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const doc = await LandlordsCollection.findOne({ id: id }).exec();
+    const doc = await LandlordsCollection.findOne({ id: parseInt(id, 10) }).exec();
     if (doc == null) {
       throw new Error('Invalid id');
     }
@@ -251,8 +292,8 @@ app.post('/new-landlord', async (req, res) => {
 const isLandlord = (obj: LandlordWithId | ApartmentWithId): boolean => 'contact' in obj;
 app.post('/set-data', async (req, res) => {
   try {
-    const landlords = await LandlordsCollection.find({}).exec();
-    const apts = await ApartmentsCollection.find({}).exec();
+    const landlords = await LandlordsCollection.find({}).lean().exec();
+    const apts = await ApartmentsCollection.find({}).lean().exec();
     app.set('landlords', landlords);
     app.set('apts', apts);
 
@@ -265,17 +306,20 @@ app.post('/set-data', async (req, res) => {
 app.get('/search', async (req, res) => {
   try {
     const query = req.query.q as string;
-    const apts = await ApartmentsCollection.find({}).lean().exec();
-
+    const apts = req.app.get('apts');
+    const landlords = req.app.get('landlords');
+    const aptsLandlords: (LandlordWithId | ApartmentWithId)[] = [...landlords, ...apts];
     const options = {
       keys: ['name', 'address'],
     };
-    const fuse = new Fuse(apts, options);
+    const fuse = new Fuse(aptsLandlords, options);
     const results = fuse.search(query).slice(0, 5);
     const resultItems = results.map((result) => result.item);
 
-    const resultsWithType: (LandlordWithLabel | ApartmentWithLabel)[] = resultItems.map(
-      (result) => ({ label: 'APARTMENT', ...result } as ApartmentWithLabel)
+    const resultsWithType: (LandlordWithLabel | ApartmentWithLabel)[] = resultItems.map((result) =>
+      isLandlord(result)
+        ? ({ label: 'LANDLORD', ...result } as LandlordWithLabel)
+        : ({ label: 'APARTMENT', ...result } as ApartmentWithLabel)
     );
     res.status(200).send(JSON.stringify(resultsWithType));
   } catch (err) {

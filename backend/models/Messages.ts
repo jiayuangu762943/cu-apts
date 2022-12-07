@@ -20,6 +20,10 @@ const messageSchema = new Schema(
       type: String,
       required: true,
     },
+    date: {
+      type: Date,
+      // required: true,
+    },
   },
   { timestamps: true, toObject: { virtuals: true }, toJSON: { virtuals: true } }
 );

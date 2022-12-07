@@ -128,7 +128,8 @@ const LandlordHeader = ({
 }: Props): ReactElement => {
   const { name, profilePhoto, photos } = landlord;
   const icon = profilePhoto ? profilePhoto : defaultIcon;
-  const photoLink = photos.length ? photos[0] : defaultHeader;
+  // const photoLink = photos.length ? photos[0] : defaultHeader;
+  const photoLink = defaultHeader;
   const {
     media,
     logo,
@@ -169,7 +170,7 @@ const LandlordHeader = ({
                 </Grid>
               </Grid>
             </Grid>
-            {photos.length > 0 && (
+            {/* {photos.length > 0 && (
               <Grid container alignItems="flex-end" justify="flex-end" className={btnSection}>
                 <Button
                   disableFocusRipple
@@ -180,7 +181,7 @@ const LandlordHeader = ({
                   Show all photos
                 </Button>
               </Grid>
-            )}
+            )} */}
           </CardMedia>
         </Grid>
       </>

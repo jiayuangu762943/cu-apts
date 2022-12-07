@@ -1,6 +1,7 @@
-import { Box, List, ListItem, ListItemText, Typography } from '@material-ui/core';
-import React, { ReactElement } from 'react';
+import { Box, List, Link, ListItem, ListItemText, Button, Typography } from '@material-ui/core';
+import React, { ReactElement, useState } from 'react';
 import { makeStyles } from '@material-ui/styles';
+import { Link as RouterLink } from 'react-router-dom';
 
 const useStyles = makeStyles(() => ({
   title: {
@@ -19,6 +20,9 @@ const InfoItem = ({ text }: { text: string }) => (
   </ListItem>
 );
 
+const handleClick = async () => {
+  await axios.post(`/newContact/`);
+};
 export default function Info({ contact, address }: Props): ReactElement {
   const { title } = useStyles();
 
@@ -31,6 +35,17 @@ export default function Info({ contact, address }: Props): ReactElement {
         {contact && <InfoItem text={`Contact: ${contact}`} />}
         {address && <InfoItem text={`Address: ${address}`} />}
       </List>
+      <Link
+        {...{
+          to: `/chat`,
+          style: { textDecoration: 'none' },
+          component: RouterLink,
+        }}
+      >
+        <Button color="primary" variant="contained" disableElevation onClick={handleClick}>
+          Chat with Landlord
+        </Button>
+      </Link>
     </Box>
   );
 }

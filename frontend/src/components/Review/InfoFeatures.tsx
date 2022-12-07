@@ -15,7 +15,7 @@ export default function InfoFeatures({ buildings, contact, address }: Props): Re
     <Card variant="outlined">
       <CardContent>
         <Info contact={contact} address={address} />
-        <Divider />
+        {/* <Divider /> */}
         <PropertyInfo title="Properties Owned" info={buildings} />
       </CardContent>
     </Card>

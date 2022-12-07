@@ -1,35 +1,71 @@
 import React, { ReactElement, useState, useEffect } from 'react';
-import { Box, Container, Typography, makeStyles, TextField } from '@material-ui/core';
+import {
+  Box,
+  Container,
+  Typography,
+  makeStyles,
+  TextField,
+  Input,
+  Button,
+} from '@material-ui/core';
 // import { colors } from '../colors';
-import { IoSend } from 'react-icons/io5';
 import axios from 'axios';
+import { setTextRange } from 'typescript';
 
-// type Props = {
-//   handleSend: (event: React.SyntheticEvent) => void; //suspicious
-// };
-const handleSend = async (msg: String) => {
-  // createAuthHeaders(token)
-  const res = await axios.post('/send-msg', msg);
-  if (res.status !== 201) {
-    throw new Error('Failed to send message');
-  }
+type Props = {
+  senderName: string;
+  receiverName: string;
 };
-const ChatInput = () => (
-  <div className="chat-input-container">
-    <TextField
-      id="outlined-basic"
-      label="Outlined"
-      variant="outlined"
-      multiline={true}
-      onChange={(event) => {
-        const value = event.target.value;
-        if (value !== '' || value !== null) {
-          handleSend(value);
-        }
-      }}
-    />
-    <IoSend />
-    {/*  onClick={handleSend}  */}
-  </div>
-);
+
+const ChatInput = ({ senderName, receiverName }: Props) => {
+  const [msgText, setMsgText] = useState('');
+  // const socket = io();
+
+  const handleSend = async () => {
+    // createAuthHeaders(token)
+    let msg = {
+      sender: senderName,
+      receiver: receiverName,
+      message: msgText,
+    };
+    const res = await axios.post('/send', msg);
+    if (res.status !== 201) {
+      throw new Error('Failed to send message');
+    }
+  };
+
+  return (
+    <div className="chat-input-container">
+      <TextField
+        id="outlined-basic"
+        label="Outlined"
+        variant="outlined"
+        multiline={true}
+        onChange={(event) => {
+          const value = event.target.value;
+          if (value !== '' || value !== null) {
+            setMsgText(value);
+          }
+        }}
+        onKeyPress={(event) => {
+          if (event.key === 'Enter') {
+            handleSend();
+            setMsgText('');
+          }
+        }}
+      />
+      <Button
+        color="primary"
+        variant="contained"
+        disableElevation
+        onClick={() => {
+          handleSend();
+          setMsgText('');
+        }}
+      >
+        Send
+      </Button>
+    </div>
+  );
+};
 export default ChatInput;

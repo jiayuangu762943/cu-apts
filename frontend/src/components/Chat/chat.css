@@ -1,0 +1,44 @@
+.chat-preview-container {
+  width: 100%;
+  height: 80px;
+  padding: 0.5rem;
+  background-color: white;
+  cursor: pointer;
+  border-bottom: 1px solid black;
+
+  display: flex;
+  align-items: center;
+  transition: all 0.5s;
+}
+
+.chat-preview-container:hover {
+  background-color: #f5f5f5;
+}
+
+.chat-preview-container.active {
+  background-color: #f5f5f5;
+}
+
+.chat-preview {
+  margin-left: 10px;
+  color: black;
+  display: inline-block;
+  overflow: hidden;
+  border: 10px black;
+}
+
+.chat-preview h1 {
+  font-weight: 500;
+  margin: 0;
+}
+
+.chat-preview p {
+  font-weight: 400;
+  margin: 0;
+
+  /* Truncate text */
+  width: 100%;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}

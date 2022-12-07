@@ -178,12 +178,16 @@ const LandlordPage = (): ReactElement => {
     <>
       <Grid container item spacing={3} justify="space-between" alignItems="center">
         <Grid item>
-          <Typography variant="h4">Reviews ({reviewData.length})</Typography>
-          {reviewData.length === 0 && (
-            <Typography>No reviews available. Be the first to leave one!</Typography>
-          )}
+          <Typography variant="h4">
+            Reviews ({reviewData === undefined ? 0 : reviewData.length})
+          </Typography>
+          {reviewData === undefined
+            ? true
+            : reviewData.length === 0 && (
+                <Typography>No reviews available. Be the first to leave one!</Typography>
+              )}
         </Grid>
-        {landlordData && landlordData.photos.length > 0 && (
+        {/* {landlordData && landlordData.photos.length > 0 && (
           <Button
             color="secondary"
             variant="contained"
@@ -192,7 +196,7 @@ const LandlordPage = (): ReactElement => {
           >
             Show all photos
           </Button>
-        )}
+        )} */}
         <Grid item sm={4} md={8}>
           <Grid container spacing={1} justify="flex-end" alignItems="center">
             <Grid item>
@@ -254,9 +258,9 @@ const LandlordPage = (): ReactElement => {
       {landlordData && (
         <Container>
           <LandlordHeader
-            averageRating={getAverageRating(reviewData)}
+            averageRating={getAverageRating(reviewData === undefined ? [] : reviewData)}
             landlord={landlordData}
-            numReviews={reviewData.length}
+            numReviews={reviewData === undefined ? 0 : reviewData.length}
             handleClick={() => setCarouselOpen(true)}
           />
         </Container>
