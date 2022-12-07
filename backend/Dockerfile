@@ -1,7 +1,7 @@
 FROM node:16-alpine
 
 ENV YARN_VERSION 1.16.0
-RUN apk add --no-cache python3 g++ make
+
 RUN apk add --no-cache --virtual .build-deps-yarn curl \
     && curl -fSLO --compressed "https://yarnpkg.com/downloads/$YARN_VERSION/yarn-v$YARN_VERSION.tar.gz" \
     && tar -xzf yarn-v$YARN_VERSION.tar.gz -C /opt/ \

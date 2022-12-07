@@ -42,10 +42,11 @@ Props) => {
       });
     });
   }, [add]);
-  // useEffect(() => {
-  //   setMessages([...messages, ...add]);
-  // }, [add]);
-  const formated_msgs = messages.concat(add).map((m: Message, i: number) =>
+  useEffect(() => {
+    setMessages([...messages, ...add]);
+  }, []);
+  // .concat(add)
+  const formated_msgs = messages.map((m: Message, i: number) =>
     // console.log(m.sender == senderName.split(' ').join('_')),
     m.sender === senderName.split(' ').join('_') || m.sender === senderName ? (
       <div key={i}>
