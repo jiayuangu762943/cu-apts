@@ -1,16 +1,6 @@
 import { model, Schema } from 'mongoose';
 import autopopulate from 'mongoose-autopopulate';
 import { IReviewDocument } from '../types/review.type';
-// import { DetailedRating } from '../../common/types/db-types'
-
-// type DetailedRating = {
-//   readonly location: number;
-//   readonly safety: number;
-//   readonly value: number;
-//   readonly maintenance: number;
-//   readonly communication: number;
-//   readonly conditions: number;
-// };
 
 const reviewSchema = new Schema(
   {

@@ -1,7 +1,7 @@
 import React, { ReactElement } from 'react';
 import { Grid, FormLabel } from '@material-ui/core';
 import HeartRating from '../utils/HeartRating';
-import { DetailedRating } from '../../../../common/types/db-types';
+import { DetailedRating } from '../../../common/types/db-types';
 
 type Props = {
   readonly ratings: DetailedRating;

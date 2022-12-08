@@ -1,0 +1,14 @@
+import { ChatClient } from '@azure/communication-chat';
+import { AzureCommunicationTokenCredential } from '@azure/communication-common';
+
+// Your unique Azure Communication service endpoint
+let endpointUrl = 'https://azure-chat-app.communication.azure.com/';
+// The user access token generated as part of the pre-requisites
+let userAccessToken =
+  'eyJhbGciOiJSUzI1NiIsImtpZCI6IjEwNiIsIng1dCI6Im9QMWFxQnlfR3hZU3pSaXhuQ25zdE5PU2p2cyIsInR5cCI6IkpXVCJ9.eyJza3lwZWlkIjoiYWNzOjFkOWRjNmVmLTNiYmEtNDRmMy1hZjg0LTU0ODYzYmZhYzgxOV8wMDAwMDAxNS04YWI3LTM3ZmYtYjRmMS05YzNhMGQwMGJkNzUiLCJzY3AiOjE3OTIsImNzaSI6IjE2NzAzODcxNzYiLCJleHAiOjE2NzA0NzM1NzYsImFjc1Njb3BlIjoiY2hhdCIsInJlc291cmNlSWQiOiIxZDlkYzZlZi0zYmJhLTQ0ZjMtYWY4NC01NDg2M2JmYWM4MTkiLCJyZXNvdXJjZUxvY2F0aW9uIjoidW5pdGVkc3RhdGVzIiwiaWF0IjoxNjcwMzg3MTc2fQ.d0qpS0KHdEmXU90SEuEAct9HYrUmk79TXKAJ-W1EvB4OnyHF25AShipCSEloi-sE2ZzPu3Wmxiu89XsgQd52UMbS8X8jkBix4Km1nPHruJMhnH15ngZYRUn9vDF983mWIcBd700NFcc5uMmJ62SWaB-WdlvJDM1xtf1YmGGt8OAQHz3bofGi0-ZNX1rOd0zxEykvkXFxg0ydU0YmeqDO6fR1PEwytuZBB1q-c5gC4sRfIQZcEZ9FcTVsnNj2Eor7Inyw5IAz7WZY9UEQSPlscVUrpXDzAmXUUO_1YqvJAr5Qy4fiVfWWsWm3rqTsgA9UOS6D4Thi7qLad5XuhEEoIg';
+let chatClient = new ChatClient(
+  endpointUrl,
+  new AzureCommunicationTokenCredential(userAccessToken)
+);
+console.log('Azure Communication Chat client created!');
+export default chatClient;

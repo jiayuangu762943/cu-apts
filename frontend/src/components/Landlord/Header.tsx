@@ -1,16 +1,8 @@
 import React, { ReactElement } from 'react';
 import HeartRating from '../utils/HeartRating';
-import {
-  CardHeader,
-  CardMedia,
-  Grid,
-  Button,
-  withStyles,
-  makeStyles,
-  Avatar,
-} from '@material-ui/core';
+import { CardHeader, CardMedia, Grid, withStyles, makeStyles, Avatar } from '@material-ui/core';
 import styles from './Header.module.scss';
-import { Landlord } from '../../../../common/types/db-types';
+import { Landlord } from '../../../common/types/db-types';
 import defaultHeader from '../../assets/default_header.png';
 import defaultIcon from '../../assets/default_icon.png';
 import { colors } from '../../colors';
@@ -126,19 +118,19 @@ const LandlordHeader = ({
   handleClick,
   averageRating,
 }: Props): ReactElement => {
-  const { name, profilePhoto, photos } = landlord;
+  const { name, profilePhoto } = landlord;
   const icon = profilePhoto ? profilePhoto : defaultIcon;
-  const photoLink = photos.length ? photos[0] : defaultHeader;
+  // const photoLink = photos.length ? photos[0] : defaultHeader;
+  const photoLink = defaultHeader;
   const {
     media,
     logo,
-    photoButton,
     landlordName,
     landlordReviews,
     landlordRating,
     headerSection,
     ratingSection,
-    btnSection,
+
     logoGrid,
   } = useStyles();
   return (
@@ -169,7 +161,7 @@ const LandlordHeader = ({
                 </Grid>
               </Grid>
             </Grid>
-            {photos.length > 0 && (
+            {/* {photos.length > 0 && (
               <Grid container alignItems="flex-end" justify="flex-end" className={btnSection}>
                 <Button
                   disableFocusRipple
@@ -180,7 +172,7 @@ const LandlordHeader = ({
                   Show all photos
                 </Button>
               </Grid>
-            )}
+            )} */}
           </CardMedia>
         </Grid>
       </>

@@ -4,7 +4,7 @@ export interface IApartmentDocument extends IDocument {
   readonly id: number;
   readonly name: string;
   readonly address: string; // may change to placeID for Google Maps integration
-  readonly landlordId: string | null;
+  readonly landlordId: Number | null;
   readonly numBaths: number | null;
   readonly numBeds: number | null;
   readonly photos: readonly string[]; // can be empty

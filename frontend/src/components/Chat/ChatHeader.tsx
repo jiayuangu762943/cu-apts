@@ -1,20 +1,28 @@
-import React, { ReactElement, useState, useEffect } from 'react';
-import { Box, Container, Typography, makeStyles } from '@material-ui/core';
+import React from 'react';
+import { Avatar, Divider } from '@material-ui/core';
 // import { get } from '../utils/call';
 // import { colors } from '../colors';
-import { Avatar } from '@material-ui/core';
 
 type Props = {
-  chatId: Number;
-  profilePic: string;
-  userName: string;
+  receiverProfilePic: string;
+  receiverName: string;
 };
-const ChatHeader = ({ chatId, profilePic, userName }: Props) => (
-  <div className="chat-messages-container">
-    <div className="chat-header">
-      <Avatar alt={userName} src={profilePic} />
-      <div className="xs">{userName}</div>
+
+// const useStyles = makeStyles(() => ({
+//   title: {
+//     paddingLeft: '10px',
+//   },
+// }));
+
+const ChatHeader = ({ receiverProfilePic, receiverName }: Props) => {
+  return (
+    <div className="chat-preview-container">
+      <div className="chat-header">
+        <Avatar className="chat-preview-pic" src={receiverProfilePic} />
+        <div className="chat-preview">{receiverName}</div>
+      </div>
+      <Divider />
     </div>
-  </div>
-);
+  );
+};
 export default ChatHeader;

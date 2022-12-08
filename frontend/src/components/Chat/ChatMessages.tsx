@@ -1,13 +1,70 @@
-import React, { ReactElement, useState, useEffect } from 'react';
-import { Box, Container, Typography, makeStyles } from '@material-ui/core';
-// import { get } from '../utils/call';
-// import { colors } from '../colors';
+import React, { useEffect, useState } from 'react';
+import ChatReceive from './ChatReceive';
+import chatClient from './client';
 
-type Props = {
-  messages: string;
-  profilePic: string;
-  // user: firebase.User | null;
-  username: string;
+type Message = {
+  message: string;
+  sender: string;
+  receiver: string;
 };
-const ChatMessages = () => <div className="chat-messages-container"></div>;
+type Props = {
+  senderProfilePic: string;
+  senderName: string;
+  receiverProfilePic: string;
+  receiverName: string;
+  messages: Message[];
+  setMessages: React.Dispatch<React.SetStateAction<Message[]>>;
+  // setReceiverName:React.Dispatch<React.SetStateAction<number>>;
+};
+
+const ChatMessages = ({
+  senderProfilePic,
+  senderName,
+  receiverProfilePic,
+  receiverName,
+  messages,
+  setMessages,
+}: // setReceiverName,
+Props) => {
+  const [add, setAdd] = useState<Message[]>([]);
+  useEffect(() => {
+    chatClient.startRealtimeNotifications().then(() => {
+      // subscribe to new notification
+      chatClient.on('chatMessageReceived', (e) => {
+        const msgArr = e.message.split(',');
+        const msgObj = {
+          message: msgArr[0],
+          sender: msgArr[1],
+          receiver: msgArr[2],
+        };
+        setAdd([...add, msgObj]);
+        // your code here
+      });
+    });
+  }, [add]);
+  useEffect(() => {
+    setMessages([...messages, ...add]);
+  }, []);
+  // .concat(add)
+  const formated_msgs = messages.map((m: Message, i: number) =>
+    // console.log(m.sender == senderName.split(' ').join('_')),
+    m.sender === senderName.split(' ').join('_') || m.sender === senderName ? (
+      <div key={i}>
+        <ChatReceive message={m.message} name={senderName} profilePic={senderProfilePic} />
+      </div>
+    ) : (
+      <div key={i}>
+        <ChatReceive message={m.message} name={receiverName} profilePic={receiverProfilePic} />
+      </div>
+    )
+  );
+
+  return (
+    <div className="chat-messages">
+      {!messages ? null : formated_msgs}
+      <div style={{ float: 'left', clear: 'both' }}></div>
+    </div>
+  );
+};
+
 export default ChatMessages;

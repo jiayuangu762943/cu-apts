@@ -10,7 +10,7 @@ import {
   Typography,
   useMediaQuery,
 } from '@material-ui/core';
-import { ApartmentWithId, ReviewWithId } from '../../../../common/types/db-types';
+import { ApartmentWithId, ReviewWithId } from '../../../common/types/db-types';
 import HeartRating from '../utils/HeartRating';
 import { getAverageRating } from '../../utils/average';
 import { colors } from '../../colors';

@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - melinda
   workflow_dispatch:
 
 jobs:

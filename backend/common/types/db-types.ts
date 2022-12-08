@@ -1,7 +1,7 @@
 // import { Document } from 'mongoose';
-import { IReviewDocument } from '../../frontend/src/types/review.type';
-import { ILandlordDocument } from '../../frontend/src/types/landlord.type';
-import { IApartmentDocument } from '../../frontend/src/types/apartment.type';
+import { IReviewDocument } from '../../types/review.type';
+import { ILandlordDocument } from '../../types/landlord.type';
+import { IApartmentDocument } from '../../types/apartment.type';
 
 type Id = {
   // readonly _id: string;
@@ -58,7 +58,7 @@ export type LandlordWithLabel = LandlordWithId & { readonly label: 'LANDLORD' };
 export type Apartment = {
   readonly name: string;
   readonly address: string; // may change to placeID for Google Maps integration
-  readonly landlordId: string | null;
+  readonly landlordId: number | null;
   readonly numBaths: number | null;
   readonly numBeds: number | null;
   readonly photos: readonly string[]; // can be empty

@@ -11,7 +11,7 @@ import {
   Link,
 } from '@material-ui/core';
 import { get } from '../../utils/call';
-import { LandlordOrApartmentWithLabel } from '../../../../common/types/db-types';
+import { LandlordOrApartmentWithLabel } from '../../../common/types/db-types';
 import SearchIcon from '@material-ui/icons/Search';
 import { makeStyles } from '@material-ui/core/styles';
 import { Link as RouterLink } from 'react-router-dom';
@@ -113,7 +113,7 @@ export default function Autocomplete() {
                       <Link
                         key={index}
                         {...{
-                          to: `/apartment/${id}`,
+                          to: `/${label.toLowerCase()}/${id}`,
                           style: { textDecoration: 'none' },
                           component: RouterLink,
                         }}

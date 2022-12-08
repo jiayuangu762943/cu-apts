@@ -8,7 +8,7 @@
     /* Strict Type-Checking Options */
     "strict": true /* Base directory to resolve non-absolute module names. */,
     "paths": {
-      "@common/*": ["../common/*"]
+      "@common/*": ["../frontend/common/*"]
     },
     "esModuleInterop": true /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */,
     "skipLibCheck": true /* Skip type checking of declaration files. */,
@@ -16,7 +16,7 @@
     "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "outDir": "dist",
-    "rootDirs": ["./src", "../common"],
+    "rootDirs": ["./src", "../frontend/common"],
     "baseUrl": "./"
     
   },

@@ -9,7 +9,7 @@ import { ThemeProvider } from '@material-ui/core';
 import { createTheme } from '@material-ui/core/styles';
 import NavBar, { NavbarButton } from './components/utils/NavBar';
 import NotFoundPage from './pages/NotFoundPage';
-import { ApartmentWithId } from '../../common/types/db-types';
+import { ApartmentWithId } from '../common/types/db-types';
 import Footer from './components/utils/Footer';
 import { hotjar } from 'react-hotjar';
 import { HJID, HJSV } from './constants/hotjar';
@@ -68,8 +68,8 @@ const home: NavbarButton = {
 };
 
 const review: NavbarButton = {
-  label: 'Reviews',
-  href: '/reviews',
+  label: 'Messages',
+  href: '/chat',
 };
 
 export type CardData = {
@@ -110,7 +110,7 @@ const App = (): ReactElement => {
             <Route path="/apartment/:aptId" component={ApartmentPage} />
             <Route exact path="/notfound" component={NotFoundPage} />
             <Route path="/search" component={SearchResultsPage} />
-            <Route path="/chat/:chatId/:profilePic/:userName" component={ChatRoomPage} />
+            <Route path="/chat" component={ChatRoomPage} />
           </Switch>
         </div>
         <Footer />

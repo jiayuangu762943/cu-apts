@@ -15,34 +15,20 @@ import {
   LandlordWithLabel,
   ApartmentWithLabel,
   ApartmentWithId,
-} from '@common/types/db-types';
+} from '../common/types/db-types';
 import path from 'path';
 import db from '../dbConfigs';
-import kafka from 'kafka-node';
 
 import ReviewsCollection from '../models/Reviews';
 import LandlordsCollection from '../models/Landlords';
 import ApartmentsCollection from '../models/Buildings';
-import socketIO from 'socket.io';
-import event from 'events';
-
+import MessagesCollection from '../models/Messages';
+const http = require('http');
+// const io = require('socket.io');
+import chatClient from './client';
+import { CommunicationIdentityClient } from '@azure/communication-identity';
+// import { ChatThreadClient } from '@azure/communication-chat';
 const app: Express = express();
-
-const server = http.createServer(app);
-const io = socketIO(server);
-const producer = new kafka.Producer(new kafka.KafkaClient());
-const consumer = new kafka.Consumer(new kafka.KafkaClient(), [{ topic: 'emptytopic', offset: 0 }], {
-  groupId: 'kaanbayram',
-  autoCommit: false,
-});
-
-producer.on('ready', function () {
-  console.log('Producer is ready');
-});
-producer.on('error', function (err: Error) {
-  console.log('Producer is in error state');
-  console.log(err);
-});
 
 dotenv.config();
 app.use(express.json());
@@ -53,89 +39,131 @@ app.use(express.static(__dirname)); //here is important thing - no static direct
 
 db.dbConnection();
 
-app.post('/send', (req, res) => {
-  const sentMessage = JSON.stringify(req.body.message);
-  const payloads = [{ topic: req.body.topic, messages: sentMessage, partition: 0 }];
-  producer.send(payloads, function (err: Error, data: any) {
-    res.json(data);
-  });
-});
-
-const kontrol = false;
-app.post('/changetopic', function (req, res) {
-  consumer.addTopics([req.body.topic], (err: Error, added: string[]) => {
-    console.log(added + ' eklendi.');
-  });
-  consumer.resume();
-  // console.log(consumer.payloads[0]);
-  // global.kontrol = true;
-});
-const eventEmitter2 = new event.EventEmitter();
-eventEmitter2.setMaxListeners(150);
-
-app.post('/createtopic', function (req, res) {
-  var client = new kafka.KafkaClient();
-
-  console.log(req.body.createtopic);
-  var topicsToCreate = [
-    {
-      topic: req.body.createtopic,
-      partitions: 1,
-      replicationFactor: 1,
-    },
-  ];
-  client.createTopics(topicsToCreate, (error, result) => {
-    console.log(result);
-  });
-});
-
-const eventEmitter3 = new event.EventEmitter();
-eventEmitter3.setMaxListeners(150);
-
-const eventEmitter = new event.EventEmitter();
-eventEmitter.setMaxListeners(150);
-
-const consumer2 = new kafka.Consumer(
-  new kafka.KafkaClient(),
-  [{ topic: 'emptytopic', offset: 0 }],
-  {
-    groupId: 'kaanbayram',
-    autoCommit: false,
-  }
+const { Kafka, logLevel } = require('kafkajs');
+type Message = {
+  message: string;
+  sender: string;
+  receiver: string;
+};
+// var Kafka = require('node-rdkafka');
+// const ip = require('ip');
+// const host = process.env.HOST_IP || ip.address();
+// const topic = 'message';
+// const httpServer = require('http').createServer();
+// producer.connect();
+const connectionString =
+  'endpoint=https://azure-chat-app.communication.azure.com/;accesskey=cZs5v6Y9QXw2obA+QrZHICiodb/LGLADqoyEihRBlSDkMB79mEF6cxFojlMNIMEQVD8BSm2iFFpTPoC68DJk7Q==';
+// Instantiate the identity client
+const identityClient = new CommunicationIdentityClient(
+  connectionString == null ? '' : connectionString
 );
 
-const dataarray = [];
-consumer.on('message', function (message) {
-  if (kontrol === true) {
-    count = global.dataarray.length;
-    while (count > 0) {
-      global.dataarray.pop();
-      count = count - 1;
-    }
-    global.kontrol = false;
+app.post('/send', async (req, res) => {
+  let userChatThreadClient = app.get(`${req.body.sender}&${req.body.receiver}`);
+  if (userChatThreadClient == null) {
+    let senderIdentityResponse = await identityClient.createUser();
+    const senderCommId = senderIdentityResponse.communicationUserId;
+    let receiverIdentityResponse = await identityClient.createUser();
+    const receiverCommId = receiverIdentityResponse.communicationUserId;
+    const createChatThreadRequest = {
+      topic: `${req.body.sender},${req.body.receiver}`,
+    };
+    const createChatThreadOptions = {
+      participants: [
+        {
+          id: { communicationUserId: senderCommId },
+          displayName: req.body.sender,
+        },
+        {
+          id: { communicationUserId: receiverCommId },
+          displayName: req.body.receiver,
+        },
+      ],
+    };
+    const createChatThreadResult = await chatClient.createChatThread(
+      createChatThreadRequest,
+      createChatThreadOptions
+    );
+    const threadId = createChatThreadResult.chatThread!.id;
+    let chatThreadClient = chatClient.getChatThreadClient(threadId);
+    app.set(`${req.body.sender}&${req.body.receiver}`, chatThreadClient);
+    userChatThreadClient = chatThreadClient;
   }
-
-  console.log(message.value);
-  dataarray.push(message.value);
-  eventEmitter.emit('trigger');
+  const sendMessageRequest = {
+    content: `${req.body.message},${req.body.sender},${req.body.receiver}`,
+  };
+  let sendMessageOptions = {
+    senderDisplayName: req.body.sender,
+    type: 'text',
+  };
+  const sendChatMessageResult = await userChatThreadClient.sendMessage(
+    sendMessageRequest,
+    sendMessageOptions
+  );
+  const messageId = sendChatMessageResult.id;
+  console.log(`Message sent!, message id:${messageId}`);
+  const doc = await new MessagesCollection({
+    content: req.body.message,
+    sender: req.body.sender.split(' ').join('_'),
+    receiver: req.body.receiver.split(' ').join('_'),
+    date: new Date(),
+  }).save();
+  console.log(`msg save to db`);
+  res.status(201).send(
+    JSON.stringify({
+      docId: doc.id,
+    })
+  );
 });
 
-io.on('connection', (socket) => {
-  console.log('User connected');
-  io.sockets.emit('getmessage', { data: dataarray });
-
-  eventEmitter.on('trigger', () => {
-    io.sockets.emit('getmessage', { data: dataarray });
-  });
+app.post('/newContact/:senderName/:receiverName', async (req, res) => {
+  const { senderName, receiverName } = req.params;
+  const doc = await new MessagesCollection({
+    content: 'Hi',
+    sender: senderName,
+    receiver: receiverName,
+  }).save();
+  console.log(receiverName);
+  res.status(201).send(doc.id);
 });
 
-io.on('connection', (socket) => {
-  console.log('user connected socket2');
-  io.sockets.emit('sendlist', { data: listtopic });
+app.get('/getContacts/:user', async (req, res) => {
+  const { user } = req.params;
 
-  eventEmitter3.on('trigsend', () => {
-    io.sockets.emit('sendlist', { data: listtopic });
+  const receivers = await MessagesCollection.distinct('receiver', { sender: user }).exec();
+  const senders = await MessagesCollection.distinct('sender', { receiver: user }).exec();
+  var contacts = Array.from(new Set(receivers.concat(senders)));
+  res.status(201).send(JSON.stringify(contacts));
+  // new real-time random contact
+});
+
+app.get('/getMsgs/:user1/:user2', async (req, res) => {
+  const { user1, user2 } = req.params;
+  const messageDocs = await MessagesCollection.find({
+    sender: {
+      // $elemMatch: {
+      $in: [user1, user2],
+      // },
+    },
+    receiver: {
+      // $elemMatch: {
+      $in: [user1, user2],
+      // },
+    },
+  }).exec();
+  // .sort({ date: 1 })
+
+  const cleanedNullMsgObjs = messageDocs.map((msg) => {
+    if (msg.content !== '-') {
+      const obj = {
+        message: msg.content,
+        sender: msg.sender,
+        receiver: msg.receiver,
+      };
+      return obj;
+    }
   });
+  res.status(201).send(cleanedNullMsgObjs);
 });
 
 app.post('/new-review', authenticate, async (req, res) => {
@@ -158,6 +186,18 @@ app.post('/new-review', authenticate, async (req, res) => {
     console.error(err);
     res.status(401).send('Error');
   }
+});
+
+app.get('/location/:loc', async (req, res) => {
+  const { loc } = req.params;
+  const buildingDocs = await ApartmentsCollection.find({ area: loc.toUpperCase() })
+    .limit(10)
+    .exec();
+
+  // const buildings: ApartmentWithId[] = buildingDocs.map(
+  //   (doc) => ({ id: doc.id, ...doc } as ApartmentWithId)
+  // );
+  res.status(200).send(JSON.stringify(await pageData(buildingDocs)));
 });
 
 app.get('/review/:idType/:id', async (req, res) => {
@@ -193,7 +233,7 @@ app.get('/landlord/:id', async (req, res) => {
   try {
     const { id } = req.params;
 
-    const doc = await LandlordsCollection.findOne({ id: id }).exec();
+    const doc = await LandlordsCollection.findOne({ id: parseInt(id, 10) }).exec();
     if (doc == null) {
       throw new Error('Invalid id');
     }
@@ -260,8 +300,8 @@ app.post('/new-landlord', async (req, res) => {
 const isLandlord = (obj: LandlordWithId | ApartmentWithId): boolean => 'contact' in obj;
 app.post('/set-data', async (req, res) => {
   try {
-    const landlords = await LandlordsCollection.find({}).exec();
-    const apts = await ApartmentsCollection.find({}).exec();
+    const landlords = await LandlordsCollection.find({}).lean().exec();
+    const apts = await ApartmentsCollection.find({}).lean().exec();
     app.set('landlords', landlords);
     app.set('apts', apts);
 
@@ -274,17 +314,20 @@ app.post('/set-data', async (req, res) => {
 app.get('/search', async (req, res) => {
   try {
     const query = req.query.q as string;
-    const apts = await ApartmentsCollection.find({}).lean().exec();
-
+    const apts = req.app.get('apts');
+    const landlords = req.app.get('landlords');
+    const aptsLandlords: (LandlordWithId | ApartmentWithId)[] = [...landlords, ...apts];
     const options = {
       keys: ['name', 'address'],
     };
-    const fuse = new Fuse(apts, options);
+    const fuse = new Fuse(aptsLandlords, options);
     const results = fuse.search(query).slice(0, 5);
     const resultItems = results.map((result) => result.item);
 
-    const resultsWithType: (LandlordWithLabel | ApartmentWithLabel)[] = resultItems.map(
-      (result) => ({ label: 'APARTMENT', ...result } as ApartmentWithLabel)
+    const resultsWithType: (LandlordWithLabel | ApartmentWithLabel)[] = resultItems.map((result) =>
+      isLandlord(result)
+        ? ({ label: 'LANDLORD', ...result } as LandlordWithLabel)
+        : ({ label: 'APARTMENT', ...result } as ApartmentWithLabel)
     );
     res.status(200).send(JSON.stringify(resultsWithType));
   } catch (err) {

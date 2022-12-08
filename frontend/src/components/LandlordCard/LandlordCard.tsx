@@ -9,7 +9,7 @@ import {
   Typography,
   useMediaQuery,
 } from '@material-ui/core';
-import { LandlordWithLabel } from '../../../../common/types/db-types';
+import { LandlordWithLabel } from '../../../common/types/db-types';
 import { colors } from '../../colors';
 
 type Props = {
