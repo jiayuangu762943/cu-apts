@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import ChatReceive from './ChatReceive';
 import chatClient from './client';
+import { Button } from '@material-ui/core';
 
 type Message = {
   message: string;
@@ -42,9 +43,7 @@ Props) => {
       });
     });
   }, [add]);
-  useEffect(() => {
-    setMessages([...messages, ...add]);
-  }, []);
+
   // .concat(add)
   const formated_msgs = messages.map((m: Message, i: number) =>
     // console.log(m.sender == senderName.split(' ').join('_')),
@@ -63,6 +62,16 @@ Props) => {
     <div className="chat-messages">
       {!messages ? null : formated_msgs}
       <div style={{ float: 'left', clear: 'both' }}></div>
+      <Button
+        color="secondary"
+        variant="contained"
+        disableElevation
+        onClick={() => {
+          setMessages([...messages, ...add]);
+        }}
+      >
+        Refresh
+      </Button>
     </div>
   );
 };
